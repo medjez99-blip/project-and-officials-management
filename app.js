@@ -164,3 +164,80 @@ document.addEventListener('keydown', e => {
   if(currentUser){ startApp(); }
   else { showAuth(); }
 })();
+/* ===================== PWA install ===================== */
+let deferredPrompt = null;
+const btnInstall  = document.getElementById('btnInstall');
+
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+}
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function showInstallBtn(){ if(btnInstall) btnInstall.style.display = ''; }
+function hideInstallBtn(){ if(btnInstall) btnInstall.style.display = 'none'; }
+
+/* ── Chromium ── */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();          // suppress default mini-infobar
+  deferredPrompt = e;
+  showInstallBtn();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  hideInstallBtn();
+  toast('تم تثبيت التطبيق — يمكنك فتحه من الشاشة الرئيسية', 'ok');
+});
+
+/* ── iOS / Firefox: no event fires → show manual path ── */
+if(isIOS() && !isStandalone()){
+  showInstallBtn();
+}
+
+/* ── Already installed → hide ── */
+if(isStandalone()){
+  hideInstallBtn();
+}
+
+/* ── Button click ── */
+if(btnInstall){
+  btnInstall.addEventListener('click', async () => {
+    /* Chromium path */
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      hideInstallBtn();
+      if(outcome !== 'accepted') toast('يمكنك التثبيت لاحقاً من قائمة المتصفح', 'info');
+      return;
+    }
+
+    /* iOS path */
+    if(isIOS()){
+      showIOSInstallGuide();
+      return;
+    }
+
+    /* Firefox / unsupported */
+    toast('افتح الموقع في Chrome أو Edge لتثبيت التطبيق', 'info');
+  });
+}
+
+function showIOSInstallGuide(){
+  if(document.querySelector('.ios-install-guide')) return; // already open
+  const div = document.createElement('div');
+  div.className = 'ios-install-guide';
+  div.innerHTML =
+    '<strong>تثبيت التطبيق على iPhone / iPad</strong>' +
+    '<ol>' +
+      '<li>افتح القائمة من زر المشاركة <code>⬆️</code> في Safari</li>' +
+      '<li>اختر <strong>«إضافة إلى الشاشة الرئيسية»</strong></li>' +
+      '<li>اضغط <strong>«إضافة»</strong> في الأعلى</li>' +
+    '</ol>' +
+    '<button class="btn btn-primary btn-sm" type="button">فهمت</button>';
+  document.body.appendChild(div);
+  div.querySelector('button').onclick = () => div.remove();
+}

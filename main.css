@@ -661,6 +661,29 @@ tbody tr:hover{background:#FAFBFD}
     opacity: 0.85;
     font-weight: 500;
 }
+
+/* ===================== iOS install guide ===================== */
+.ios-install-guide{
+  position:fixed;inset-inline:16px;bottom:16px;z-index:800;
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow-lg);padding:18px 20px;
+  max-width:420px;margin-inline:auto;
+  animation:toastIn .25s ease;
+}
+.ios-install-guide strong{display:block;font-size:14px;color:var(--ink);margin-bottom:10px}
+.ios-install-guide ol{margin:0 0 14px;padding-inline-start:20px;font-size:13px;line-height:1.9;color:var(--ink-2)}
+.ios-install-guide ol li::marker{color:var(--primary-2);font-weight:800}
+.ios-install-guide code{
+  background:#F1F5F9;border-radius:5px;padding:1px 6px;
+  font-family:inherit;font-size:12.5px;color:var(--primary-2);
+}
+.ios-install-guide .btn{width:100%;justify-content:center}
+
+/* Compact topbar button on small screens */
+@media(max-width:480px){
+  #btnInstall{padding:8px 10px;font-size:0}   /* text hidden, icon only */
+  #btnInstall svg{width:18px;height:18px}
+}
 /* ===================== Responsive ===================== */
 @media(max-width:820px){
   .auth{padding:0;place-items:stretch}

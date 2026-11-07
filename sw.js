@@ -3,7 +3,7 @@
    pass-through for Supabase / external APIs.
    ==================================================== */
 
-const VERSION   = 'v1';
+const VERSION   = 'v2';
 const SHELL     = 'shell-' + VERSION;
 const RUNTIME   = 'runtime-' + VERSION;
 
