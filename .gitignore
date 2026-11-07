@@ -1,0 +1,33 @@
+# ── نظام التشغيل ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# ── المحررات ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── سجلات وملفات مؤقتة ──
+*.log
+npm-debug.log*
+*.tmp
+*.temp
+
+# ── بيئة واعتماديات (غير مستخدمة حالياً، للتأمين) ──
+node_modules/
+.env
+.env.*
+
+# ── نسخ احتياطية ومخرجات ──
+*.bak
+*.zip
+*.rar
+projects-*.json
+projects-*.csv
