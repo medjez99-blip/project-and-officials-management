@@ -679,6 +679,10 @@ tbody tr:hover{background:#FAFBFD}
 }
 .ios-install-guide .btn{width:100%;justify-content:center}
 
+.field .field-label{
+  font-size:12px;font-weight:700;color:var(--ink-2);
+  /* match .field label */
+}
 /* Compact topbar button on small screens */
 @media(max-width:480px){
   #btnInstall{padding:8px 10px;font-size:0}   /* text hidden, icon only */

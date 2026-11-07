@@ -5,12 +5,14 @@
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/",
+  "id": "project-and-officials-management",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#F3F5F9",
   "theme_color": "#0B2A44",
   "categories": ["education", "productivity", "business"],
+  "display_override": ["standalone", "minimal-ui"],
   "icons": [
     {
       "src": "assets/icons/icon-192.png",

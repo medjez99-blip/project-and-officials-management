@@ -432,7 +432,7 @@
       <div class="pm-project" id="visitProject"></div>
 
       <div class="field full" style="margin-bottom:14px">
-        <label>الموقع <span style="color:var(--muted);font-weight:500;font-size:11px">(يُحدَّد تلقائياً)</span></label>
+        <div class="field-label">الموقع <span style="color:var(--muted);font-weight:500;font-size:11px">(يُحدَّد تلقائياً)</span></div>
         <div class="location-box pending" id="visitLocationBox">جارٍ تحديد الموقع…</div>
         <button type="button" class="btn btn-ghost btn-sm" id="btnRetryLoc" style="align-self:flex-start;margin-top:6px">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -446,7 +446,7 @@
       </div>
 
       <div class="field full">
-        <label>الصور <span style="color:var(--muted);font-weight:500;font-size:11px">(حتى 10 صور، تُختم بالتاريخ والموقع)</span></label>
+        <label for="btnChoosePhotos">الصور <span style="color:var(--muted);font-weight:500;font-size:11px">(حتى 10 صور، تُختم بالتاريخ والموقع)</span></label>
         <input type="file" id="visitCamInput" accept="image/*" capture="environment" style="display:none">
         <input type="file" id="visitFileInput" accept="image/*" multiple style="display:none">
         <div style="display:flex;gap:8px;flex-wrap:wrap">

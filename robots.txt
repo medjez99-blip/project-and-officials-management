@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 # Disallow: /
 
-Sitemap: https://YOUR-SITE.netlify.app/sitemap.xml
+Sitemap: https://project-and-officials-management.netlify.app/sitemap.xml
