@@ -31,3 +31,7 @@ node_modules/
 *.rar
 projects-*.json
 projects-*.csv
+
+# ── Netlify ──
+.netlify/
+.netlify.toml.local
