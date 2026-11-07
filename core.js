@@ -7,7 +7,7 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v2_ar';
+const STORE_KEY = 'edu_projects_v3_ar';
 const USERS_KEY = 'edu_users_v1';
 const SESSION_KEY = 'edu_session_v1';
 const SESSION_DAYS = 30;

@@ -165,8 +165,7 @@ document.addEventListener('keydown', e => {
   else { showAuth(); }
 })();
 /* ===================== PWA install ===================== */
-let deferredPrompt = null;
-const btnInstall  = document.getElementById('btnInstall');
+const btnInstall = document.getElementById('btnInstall');
 
 function isStandalone(){
   return window.matchMedia('(display-mode: standalone)').matches
@@ -179,55 +178,58 @@ function isIOS(){
 function showInstallBtn(){ if(btnInstall) btnInstall.style.display = ''; }
 function hideInstallBtn(){ if(btnInstall) btnInstall.style.display = 'none'; }
 
-/* ── Chromium ── */
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();          // suppress default mini-infobar
-  deferredPrompt = e;
+/* Use the early-captured event from <head>, or a fresh one */
+function getDeferredPrompt(){
+  return window.__pwaDeferredPrompt || null;
+}
+window.addEventListener('pwa-prompt-ready', () => {
+  console.log('[PWA] prompt ready (early capture) ✅');
   showInstallBtn();
 });
-
+window.addEventListener('beforeinstallprompt', e => {
+  /* fallback if <head> capture didn't run */
+  e.preventDefault();
+  window.__pwaDeferredPrompt = e;
+  showInstallBtn();
+});
 window.addEventListener('appinstalled', () => {
-  deferredPrompt = null;
+  window.__pwaDeferredPrompt = null;
   hideInstallBtn();
   toast('تم تثبيت التطبيق — يمكنك فتحه من الشاشة الرئيسية', 'ok');
 });
 
-/* ── iOS / Firefox: no event fires → show manual path ── */
-if(isIOS() && !isStandalone()){
+if (isStandalone()) {
+  /* already installed — nothing to do */
+} else if (isIOS()) {
+  /* iOS never fires the event — show manual guide */
   showInstallBtn();
+} else {
+  /* Always show the button shortly after load, regardless of the event.
+     Desktop Chrome increasingly doesn't fire beforeinstallprompt; the
+     button still works via the manual fallback path below. */
+  setTimeout(showInstallBtn, 800);
 }
 
-/* ── Already installed → hide ── */
-if(isStandalone()){
-  hideInstallBtn();
-}
-
-/* ── Button click ── */
-if(btnInstall){
+if (btnInstall) {
   btnInstall.addEventListener('click', async () => {
-    /* Chromium path */
-    if(deferredPrompt){
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      deferredPrompt = null;
+    const dp = getDeferredPrompt();
+    if (dp) {
+      dp.prompt();
+      const { outcome } = await dp.userChoice;
+      window.__pwaDeferredPrompt = null;
       hideInstallBtn();
-      if(outcome !== 'accepted') toast('يمكنك التثبيت لاحقاً من قائمة المتصفح', 'info');
+      if (outcome !== 'accepted') {
+        toast('يمكنك التثبيت لاحقاً من قائمة المتصفح (⋮ → تثبيت التطبيق)', 'info');
+      }
       return;
     }
-
-    /* iOS path */
-    if(isIOS()){
-      showIOSInstallGuide();
-      return;
-    }
-
-    /* Firefox / unsupported */
-    toast('افتح الموقع في Chrome أو Edge لتثبيت التطبيق', 'info');
+    if (isIOS()) { showIOSInstallGuide(); return; }
+    toast('افتح قائمة المتصفح (⋮) واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»', 'info');
   });
 }
 
 function showIOSInstallGuide(){
-  if(document.querySelector('.ios-install-guide')) return; // already open
+  if (document.querySelector('.ios-install-guide')) return;
   const div = document.createElement('div');
   div.className = 'ios-install-guide';
   div.innerHTML =
