@@ -1,0 +1,5 @@
+# بوابة إدارة داخلية محمية بتسجيل الدخول — يُمنع الفهرسة
+User-agent: *
+Allow: /
+
+Sitemap: https://<USERNAME>.github.io/<REPO>/sitemap.xml
