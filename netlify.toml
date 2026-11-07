@@ -1,0 +1,58 @@
+# ===================== Netlify =====================
+[build]
+  publish = "."
+  # command = ""              # static site — no build step
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# ── SPA fallback (deep links → index.html) ──
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Security & permissions ──
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"
+    Permissions-Policy     = "geolocation=(self), camera=(self), microphone=()"
+    X-XSS-Protection       = "1; mode=block"
+
+# ── HTML: never cache (so SW updates roll out) ──
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ── Service worker: no cache + scope header ──
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control          = "no-cache"
+    Service-Worker-Allowed = "/"
+
+# ── Manifest ──
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+# ── Static assets: long cache (hash/fingerprint recommended) ──
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

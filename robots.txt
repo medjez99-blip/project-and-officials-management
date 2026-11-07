@@ -1,5 +1,6 @@
 # بوابة إدارة داخلية محمية بتسجيل الدخول — يُمنع الفهرسة
 User-agent: *
 Allow: /
+# Disallow: /
 
-Sitemap: https://<USERNAME>.github.io/<REPO>/sitemap.xml
+Sitemap: https://YOUR-SITE.netlify.app/sitemap.xml
