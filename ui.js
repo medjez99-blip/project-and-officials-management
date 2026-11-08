@@ -23,7 +23,62 @@ function attentionList(){
     .filter(x => x.d !== null && x.d <= 7)
     .sort((a,b) => a.d - b.d);
 }
+/* ===================== نافذة تأكيد مخصّصة ===================== */
+function confirmDialog(opts){
+  const {
+    title   = 'تأكيد',
+    message = '',
+    okText  = 'تأكيد',
+    cancelText = 'إلغاء',
+    danger  = false
+  } = opts || {};
 
+  const m = $('#confirmModal');
+  // safe fallback if the modal markup hasn't landed yet
+  if(!m) return Promise.resolve(window.confirm(message));
+
+  return new Promise(resolve => {
+    const titleEl  = $('#confirmTitle');
+    const msgEl    = $('#confirmMessage');
+    const okEl     = $('#confirmOk');
+    const cancelEl = $('#confirmCancel');
+    const closeEl  = $('#confirmClose');
+
+    titleEl.textContent = title;
+    msgEl.textContent   = message;
+    okEl.textContent     = okText;
+    cancelEl.textContent = cancelText;
+    okEl.className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
+
+    let done = false;
+    const finish = v => {
+      if(done) return; done = true;
+      m.classList.remove('open');
+      m.setAttribute('aria-hidden','true');
+      okEl.removeEventListener('click', onOk);
+      cancelEl.removeEventListener('click', onCancel);
+      closeEl.removeEventListener('click', onCancel);
+      m.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey, true);
+      resolve(v);
+    };
+    const onOk       = () => finish(true);
+    const onCancel   = () => finish(false);
+    const onBackdrop = e => { if(e.target === m) finish(false); };
+    // capture + stopPropagation so Escape closes only the confirm dialog
+    const onKey      = e => { if(e.key === 'Escape'){ e.stopPropagation(); finish(false); } };
+
+    okEl.addEventListener('click', onOk);
+    cancelEl.addEventListener('click', onCancel);
+    closeEl.addEventListener('click', onCancel);
+    m.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey, true);
+
+    m.classList.add('open');
+    m.setAttribute('aria-hidden','false');
+    setTimeout(() => okEl.focus(), 50);
+  });
+}
 /* ===================== الإحصاءات ===================== */
 function renderStats(){
   const vis = visibleProjects();
@@ -327,8 +382,13 @@ $('#signinForm').addEventListener('submit', async e => {
   }
 }); */
 
-$('#btnLogout').addEventListener('click', () => {
-  if(!confirm('هل تريد تسجيل الخروج؟')) return;
+$('#btnLogout').addEventListener('click', async () => {
+  const ok = await confirmDialog({
+    title: 'تسجيل الخروج',
+    message: 'هل تريد تسجيل الخروج؟',
+    okText: 'خروج'
+  });
+  if(!ok) return;
   clearSession();
   showAuth();
   toast('تم تسجيل الخروج', 'info');
@@ -602,7 +662,13 @@ async function deleteVisit(projectId, visitId){
   const v = (p.visits || []).find(x => x.id === visitId);
   if(!v) return;
   if(!(isAdmin() || (currentUser && v.userId === currentUser.id))){ toast('لا تملك صلاحية حذف هذه الزيارة','bad'); return; }
-  if(!confirm('حذف هذه الزيارة وجميع صورها؟')) return;
+const ok = await confirmDialog({
+  title: 'حذف الزيارة',
+  message: 'حذف هذه الزيارة وجميع صورها؟',
+  okText: 'حذف',
+  danger: true
+});
+if(!ok) return;
 
   await deletePhotosFromDB(v.photoIds || []);
   p.visits = (p.visits || []).filter(x => x.id !== visitId);
@@ -619,10 +685,18 @@ let visitLocation = null;
 let visitPhotoQueue = [];
 let processingCount = 0;
 
-function closeNewVisit(force){
+async function closeNewVisit(force){
   if(!force){
     const hasData = visitPhotoQueue.length > 0 || $('#visitNotes').value.trim() || visitLocation;
-    if(hasData && !confirm('لديك زيارة غير محفوظة. هل تريد إغلاقها دون حفظ؟')) return;
+    if(hasData){
+      const ok = await confirmDialog({
+        title: 'زيارة غير محفوظة',
+        message: 'لديك زيارة غير محفوظة. هل تريد إغلاقها دون حفظ؟',
+        okText: 'إغلاق دون حفظ',
+        danger: true
+      });
+      if(!ok) return;
+    }
   }
   newVisitModal.classList.remove('open');
   newVisitModal.setAttribute('aria-hidden','true');
@@ -935,26 +1009,34 @@ if(usersListEl){
     toast('تم تحديث صلاحية ' + u.name, 'ok');
   });
 
-  usersListEl.addEventListener('click', e => {
-    const pwBtn = e.target.closest('button[data-pw-user]');
-    if(pwBtn){
-      const u = users.find(x => x.id === pwBtn.dataset.pwUser);
-      if(u) openPwModal(u);
-      return;
-    }
+  usersListEl.addEventListener('click', async e => {
+  const pwBtn = e.target.closest('button[data-pw-user]');
+  if(pwBtn){
+    const u = users.find(x => x.id === pwBtn.dataset.pwUser);
+    if(u) openPwModal(u);
+    return;
+  }
 
-    const btn = e.target.closest('button[data-del-user]');
-    if(!btn) return;
-    if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
-    const u = users.find(x => x.id === btn.dataset.delUser);
-    if(!u) return;
-    if(currentUser && u.id === currentUser.id) return;
-    if(!confirm('حذف المستخدم «' + u.name + '»؟\n\nلن تُحذف مشاريعه، لكنه لن يستطيع الدخول بعد الآن.')) return;
-    users = users.filter(x => x.id !== u.id);
-    saveUsers();
-    renderUsersModal();
-    toast('تم حذف المستخدم', 'bad');
+  const btn = e.target.closest('button[data-del-user]');
+  if(!btn) return;
+  if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
+  const u = users.find(x => x.id === btn.dataset.delUser);
+  if(!u) return;
+  if(currentUser && u.id === currentUser.id) return;
+
+  const ok = await confirmDialog({
+    title: 'حذف المستخدم',
+    message: 'حذف المستخدم «' + u.name + '»؟\n\nلن تُحذف مشاريعه، لكنه لن يستطيع الدخول بعد الآن.',
+    okText: 'حذف',
+    danger: true
   });
+  if(!ok) return;
+
+  users = users.filter(x => x.id !== u.id);
+  saveUsers();
+  renderUsersModal();
+  toast('تم حذف المستخدم', 'bad');
+});
 }
 
 /* ===================== إنشاء مستخدم (مدير) ===================== */
@@ -1029,6 +1111,8 @@ function openPwModal(u){
   $('#pwUserInfo').innerHTML =
     '<div class="p-name">' + esc(u.name) + '</div>' +
     '<div class="cell-sub">' + esc(u.email) + '</div>';
+  const unField = $('#pwUsername');
+  if(unField) unField.value = u.email || '';
   $('#pwNew').value = '';
   $('#pwNew2').value = '';
   $('#pwErr').classList.remove('show'); $('#pwErr').textContent = '';

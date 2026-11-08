@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v7_ar';
-const USERS_KEY = 'edu_users_v7';
-const SESSION_KEY = 'edu_session_v7';
+const STORE_KEY = 'edu_projects_v8_ar';
+const USERS_KEY = 'edu_users_v8';
+const SESSION_KEY = 'edu_session_v8';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -71,7 +71,7 @@ function daysLabel(n){
 function cleanupLegacyAuth(){
   try{
     ['edu_session_v1','edu_session_v2','edu_session_v3',
-     'edu_session_v4','edu_session_v5'].forEach(k => {
+     'edu_session_v4','edu_session_v5','edu_session_v6'].forEach(k => {
       if(localStorage.getItem(k)) localStorage.removeItem(k);
     });
   }catch(_){}

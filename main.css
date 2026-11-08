@@ -567,6 +567,7 @@ tbody tr:hover{background:#FAFBFD}
 .toast.bad{background:#B91C1C}
 .toast.info{background:#1D4ED8}
 @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#confirmModal{z-index:200}
 
 /* ===================== Auth screen ===================== */
 .auth{

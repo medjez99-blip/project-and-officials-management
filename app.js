@@ -10,7 +10,7 @@ async function deleteProjectPhotos(project){
   await deletePhotosFromDB(ids);
 }
 
-function handleAction(act, id){
+async function handleAction(act, id){
   const p = projects.find(x => x.id === id);
   if(!p) return;
 
@@ -37,7 +37,13 @@ function handleAction(act, id){
     toast('تم نسخ المشروع','info');
   }
   else if(act === 'del'){
-    if(!confirm('هل تريد حذف المشروع «' + p.name + '»؟\n\nسيتم أيضاً حذف جميع زياراته وصوره. لا يمكن التراجع.')) return;
+    const ok = await confirmDialog({
+      title: 'حذف المشروع',
+      message: 'هل تريد حذف المشروع «' + p.name + '»؟\n\nسيتم أيضاً حذف جميع زياراته وصوره. لا يمكن التراجع.',
+      okText: 'حذف',
+      danger: true
+    });
+    if(!ok) return;
     deleteProjectPhotos(p).catch(()=>{});
     projects = projects.filter(x => x.id !== id);
     render();
@@ -112,7 +118,7 @@ $('#fileImport').addEventListener('change', e => {
   const file = e.target.files && e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try{
       const arr = JSON.parse(reader.result);
       if(!Array.isArray(arr)) throw new Error('الملف يجب أن يحتوي على مصفوفة JSON');
@@ -120,7 +126,12 @@ $('#fileImport').addEventListener('change', e => {
         .filter(x => x && typeof x.name === 'string' && x.name.trim())
         .map(x => Object.assign(blank(), x, { id: x.id || uid(), visits: Array.isArray(x.visits) ? x.visits : [] }));
       if(!clean.length) throw new Error('لا توجد مشاريع صالحة في الملف');
-      if(!confirm('سيتم استيراد ' + clean.length + ' مشروع واستبدال ' + projects.length + ' مشروع حالي. هل تريد المتابعة؟')) return;
+      const ok = await confirmDialog({
+        title: 'استيراد البيانات',
+        message: 'سيتم استيراد ' + clean.length + ' مشروع واستبدال ' + projects.length + ' مشروع حالي. هل تريد المتابعة؟',
+        okText: 'استيراد'
+      });
+      if(!ok) return;
       projects = clean;
       render();
       toast('تم استيراد ' + clean.length + ' مشروع','ok');
@@ -136,7 +147,13 @@ $('#fileImport').addEventListener('change', e => {
 $('#btnClear').addEventListener('click', async () => {
   if(!isAdmin()) return;
   if(!projects.length) return toast('القائمة فارغة بالفعل','info');
-  if(!confirm('سيتم حذف جميع المشاريع (' + projects.length + ') بما فيها الزيارات والصور. هل أنت متأكد؟\n\nلا يمكن التراجع.')) return;
+  const ok = await confirmDialog({
+    title: 'حذف جميع المشاريع',
+    message: 'سيتم حذف جميع المشاريع (' + projects.length + ') بما فيها الزيارات والصور. هل أنت متأكد؟\n\nلا يمكن التراجع.',
+    okText: 'حذف الكل',
+    danger: true
+  });
+  if(!ok) return;
   for(const p of projects){ await deleteProjectPhotos(p); }
   projects = [];
   render();
@@ -146,6 +163,7 @@ $('#btnClear').addEventListener('click', async () => {
 /* ===================== لوحة المفاتيح ===================== */
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
+  if($('#confirmModal') && $('#confirmModal').classList.contains('open')) return;
   if($('#lightbox').classList.contains('open')){ closeLightbox(); return; }
   if(newVisitModal.classList.contains('open')){ closeNewVisit(false); return; }
   if(visitsModal.classList.contains('open')){ closeVisitsModal(); return; }
