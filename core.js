@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v12_ar';
-const USERS_KEY = 'edu_users_v12';
-const SESSION_KEY = 'edu_session_v12';
+const STORE_KEY = 'edu_projects_v13_ar';
+const USERS_KEY = 'edu_users_v13';
+const SESSION_KEY = 'edu_session_v13';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -274,7 +274,6 @@ async function saveWithSync(){
       }
     }
   }
-
   // 5) Queue deletes for projects that disappeared
   for(const id of prev.keys()){
     if(!currentMap.has(id)){
@@ -282,6 +281,106 @@ async function saveWithSync(){
       catch(e){ console.warn('enqueue delete failed', e); }
     }
   }
+}
+/* ===================== Sync: flusher (Phase 4c) ===================== */
+let _flushing = false;
+let _flushTimer = null;
+let _syncLoopStarted = false;
+
+async function sbUpsertProject(project){
+  const ownerId = resolveOwnerId(project);
+  const row = {
+    id: project.id,
+    owner_id: ownerId,
+    name: project.name || '(untitled)',
+    data: project,
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await window.sb.from('projects').upsert(row);
+  if(error) throw error;
+}
+
+async function sbDeleteProject(id){
+  const { error } = await window.sb.from('projects').delete().eq('id', id);
+  if(error) throw error;
+}
+
+function resolveOwnerId(project){
+  if(!currentUser) return null;
+  const email = (project.email || '').trim().toLowerCase();
+  if(email){
+    const hit = users.find(u => (u.email || '').toLowerCase() === email);
+    if(hit) return hit.id;
+  }
+  const name = (project.responsible || '').trim().toLowerCase();
+  if(name){
+    const hit = users.find(u => (u.name || '').trim().toLowerCase() === name);
+    if(hit) return hit.id;
+  }
+  return currentUser.id;
+}
+
+async function applyQueueItem(item){
+  if(item.entity === 'project'){
+    if(item.op === 'upsert') return sbUpsertProject(item.payload);
+    if(item.op === 'delete') return sbDeleteProject(item.payload.id);
+  }
+  throw new Error('Unknown entity/op: ' + item.entity + '/' + item.op);
+}
+
+async function flushQueue(){
+  if(_flushing) return;
+  if(!window.sb) return;
+  if(!currentUser) return;
+  if(!navigator.onLine) return;
+  _flushing = true;
+  try {
+    await updateSyncBadge();
+    const items = await listSyncQueue();
+    if(!items.length) return;
+    for(const item of items){
+      if(!navigator.onLine) break;
+      try {
+        await applyQueueItem(item);
+        await removeSyncItem(item._key);
+      } catch(e){
+        console.warn('[sync] item failed:', item.entity, item.op, item.projectId, e.message || e);
+        break; // preserve order; retry next tick
+      }
+    }
+  } finally {
+    _flushing = false;
+    await updateSyncBadge();
+  }
+}
+
+async function seedUnpushedProjects(){
+  if(!window.sb || !currentUser) return;
+  if(!navigator.onLine) return;
+  try {
+    const { data, error } = await window.sb.from('projects').select('id');
+    if(error) throw error;
+    const remoteIds = new Set((data || []).map(r => r.id));
+    let n = 0;
+    for(const p of projects){
+      if(!remoteIds.has(p.id)){
+        await enqueueSync('project', 'upsert', p, p.id);
+        n++;
+      }
+    }
+    if(n) console.log('[sync] seeded', n, 'unpushed project(s)');
+  } catch(e){
+    console.warn('[sync] seed failed:', e.message || e);
+  }
+}
+
+function startSyncLoop(){
+  if(_syncLoopStarted) return;
+  _syncLoopStarted = true;
+  _flushTimer = setInterval(() => { flushQueue(); }, 30000);
+  window.addEventListener('online',  () => { updateSyncBadge(); flushQueue(); });
+  window.addEventListener('offline', () => { updateSyncBadge(); });
+  updateSyncBadge();
 }
 /* ===================== تخزين المشاريع ===================== */
 function save(){

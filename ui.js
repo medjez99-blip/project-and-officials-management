@@ -284,6 +284,19 @@ function renderTable(){
       '<td class="actions">' + actions + '</td></tr>';
   }).join('');
 }
+async function updateSyncBadge(){
+  const el = $('#syncBadge');
+  if(!el) return;
+  const n = await countSyncQueue();
+  let state, text;
+  if(!navigator.onLine)         { state = 'offline'; text = 'غير متصل'; }
+  else if(_flushing)            { state = 'syncing'; text = 'مزامنة…'; }
+  else if(n > 0)                { state = 'pending'; text = 'قيد الانتظار (' + n + ')'; }
+  else                          { state = 'synced';  text = 'متزامن'; }
+  el.className = 'sync-badge ' + state;
+  el.textContent = text;
+  el.style.display = '';
+}
 
 function render(){
   renderStats();
@@ -317,10 +330,12 @@ function startApp(){
   $('#userName').textContent = currentUser.name;
   $('#userRole').textContent = currentUser.role === 'admin' ? 'مدير النظام' : 'مستخدم';
   $('#userAvatar').textContent = (currentUser.name || '?').trim().charAt(0);
-
   const stored = load();
   projects = stored || seed();
   render();
+
+  startSyncLoop();
+  seedUnpushedProjects().then(() => flushQueue()).catch(() => {});
 }
 
 /* $$('.auth-tab').forEach(btn => {
