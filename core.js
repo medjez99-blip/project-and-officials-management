@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v6_ar';
-const USERS_KEY = 'edu_users_v6';
-const SESSION_KEY = 'edu_session_v6';
+const STORE_KEY = 'edu_projects_v7_ar';
+const USERS_KEY = 'edu_users_v7';
+const SESSION_KEY = 'edu_session_v7';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -68,7 +68,14 @@ function daysLabel(n){
   if(n >= 3 && n <= 10) return n + ' أيام';
   return n + ' يومًا';
 }
-
+function cleanupLegacyAuth(){
+  try{
+    ['edu_session_v1','edu_session_v2','edu_session_v3',
+     'edu_session_v4','edu_session_v5'].forEach(k => {
+      if(localStorage.getItem(k)) localStorage.removeItem(k);
+    });
+  }catch(_){}
+}
 /* --- الأدوار --- */
 const isAdmin = () => !!currentUser && currentUser.role === 'admin';
 function isOwner(p){
@@ -400,6 +407,7 @@ async function seedUsers(){
   for(const d of demo){ await createUser(d); }
 }
 async function bootAuth(){
+  cleanupLegacyAuth();
   users = loadUsers();
   if(!users.length){ await seedUsers(); }
   const s = loadSession();

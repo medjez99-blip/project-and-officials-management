@@ -853,6 +853,7 @@ $('#lightbox').addEventListener('click', e => { if(e.target.id === 'lightbox') c
 
 /* ===================== مودال المستخدمين ===================== */
 const usersModal = $('#usersModal');
+
 function renderUsersModal(){
   const list = $('#usersList');
   if(!list) return;
@@ -910,89 +911,112 @@ function renderUsersModal(){
     '</div>';
   }).join('');
 }
-$('#btnUsers').addEventListener('click', () => {
-  if(!isAdmin()) return;
-  renderUsersModal();
-  usersModal.classList.add('open');
-  usersModal.setAttribute('aria-hidden','false');
-});
-$('#usersList').addEventListener('change', e => {
-  const sel = e.target.closest('select[data-role-for]');
-  if(!sel) return;
-  const u = users.find(x => x.id === sel.dataset.roleFor);
-  if(!u || (currentUser && u.id === currentUser.id)) return;
-  u.role = sel.value === 'admin' ? 'admin' : 'user';
-  saveUsers();
-  toast('تم تحديث صلاحية ' + u.name, 'ok');
-});
-$('#usersList').addEventListener('click', e => {
-  const pwBtn = e.target.closest('button[data-pw-user]');
-  if(pwBtn){
-    const u = users.find(x => x.id === pwBtn.dataset.pwUser);
-    if(u) openPwModal(u);
-    return;
-  }
 
-  const btn = e.target.closest('button[data-del-user]');
-  if(!btn) return;
-  const u = users.find(x => x.id === btn.dataset.delUser);
-  if(!u) return;
-  if(currentUser && u.id === currentUser.id) return;
-  if(!confirm('حذف المستخدم «' + u.name + '»؟\n\nلن تُحذف مشاريعه، لكنه لن يستطيع الدخول بعد الآن.')) return;
-  users = users.filter(x => x.id !== u.id);
-  saveUsers();
-  renderUsersModal();
-  toast('تم حذف المستخدم', 'bad');
-});
-/* ===================== إنشاء مستخدم (مدير) ===================== */
-$('#btnShowNewUser').addEventListener('click', () => {
-  if(!isAdmin()) return;
-  const f = $('#newUserForm');
-  f.classList.toggle('hidden');
-  if(!f.classList.contains('hidden')){
-    $('#nuName').value = '';
-    $('#nuEmail').value = '';
-    $('#nuPw').value = '';
-    $('#nuRole').value = 'user';
-    $('#nuErr').classList.remove('show');
-    $('#nuErr').textContent = '';
-    setTimeout(() => $('#nuName').focus(), 60);
-  }
-});
-
-$('#btnCancelNewUser').addEventListener('click', () => {
-  $('#newUserForm').classList.add('hidden');
-});
-
-$('#newUserForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
-  const name = $('#nuName').value.trim();
-  const email = $('#nuEmail').value.trim();
-  const password = $('#nuPw').value;
-  const role = $('#nuRole').value;
-  const err = $('#nuErr');
-  err.classList.remove('show'); err.textContent = '';
-
-  if(!name){ err.textContent = 'الاسم مطلوب.'; err.classList.add('show'); return; }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent = 'البريد الإلكتروني غير صالح.'; err.classList.add('show'); return; }
-  if(password.length < 6){ err.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.'; err.classList.add('show'); return; }
-
-  const btn = $('#btnSaveNewUser');
-  const old = btn.textContent;
-  btn.disabled = true; btn.textContent = 'جارٍ الإنشاء…';
-  try{
-    await createUser({ name, email, password, role });
-    $('#newUserForm').classList.add('hidden');
+const btnUsersEl = $('#btnUsers');
+if(btnUsersEl){
+  btnUsersEl.addEventListener('click', () => {
+    if(!currentUser){ toast('يرجى تسجيل الدخول أولاً','bad'); return; }  // ← was isAdmin()
     renderUsersModal();
-    toast('تم إنشاء المستخدم', 'ok');
-  }catch(err2){
-    err.textContent = err2.message || 'تعذّر إنشاء المستخدم.';
-    err.classList.add('show');
-  }finally{
-    btn.disabled = false; btn.textContent = old;
-  }
-});
+    usersModal.classList.add('open');
+    usersModal.setAttribute('aria-hidden','false');
+  });
+}
+
+const usersListEl = $('#usersList');
+if(usersListEl){
+  usersListEl.addEventListener('change', e => {
+    const sel = e.target.closest('select[data-role-for]');
+    if(!sel) return;
+    if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); renderUsersModal(); return; }
+    const u = users.find(x => x.id === sel.dataset.roleFor);
+    if(!u || (currentUser && u.id === currentUser.id)) return;
+    u.role = sel.value === 'admin' ? 'admin' : 'user';
+    saveUsers();
+    toast('تم تحديث صلاحية ' + u.name, 'ok');
+  });
+
+  usersListEl.addEventListener('click', e => {
+    const pwBtn = e.target.closest('button[data-pw-user]');
+    if(pwBtn){
+      const u = users.find(x => x.id === pwBtn.dataset.pwUser);
+      if(u) openPwModal(u);
+      return;
+    }
+
+    const btn = e.target.closest('button[data-del-user]');
+    if(!btn) return;
+    if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
+    const u = users.find(x => x.id === btn.dataset.delUser);
+    if(!u) return;
+    if(currentUser && u.id === currentUser.id) return;
+    if(!confirm('حذف المستخدم «' + u.name + '»؟\n\nلن تُحذف مشاريعه، لكنه لن يستطيع الدخول بعد الآن.')) return;
+    users = users.filter(x => x.id !== u.id);
+    saveUsers();
+    renderUsersModal();
+    toast('تم حذف المستخدم', 'bad');
+  });
+}
+
+/* ===================== إنشاء مستخدم (مدير) ===================== */
+const btnShowNewUserEl = $('#btnShowNewUser');
+if(btnShowNewUserEl){
+  btnShowNewUserEl.addEventListener('click', () => {
+    if(!isAdmin()) return;
+    const f = $('#newUserForm');
+    if(!f) return;
+    f.classList.toggle('hidden');
+    if(!f.classList.contains('hidden')){
+      $('#nuName').value = '';
+      $('#nuEmail').value = '';
+      $('#nuPw').value = '';
+      $('#nuRole').value = 'user';
+      $('#nuErr').classList.remove('show');
+      $('#nuErr').textContent = '';
+      setTimeout(() => $('#nuName').focus(), 60);
+    }
+  });
+}
+
+const btnCancelNewUserEl = $('#btnCancelNewUser');
+if(btnCancelNewUserEl){
+  btnCancelNewUserEl.addEventListener('click', () => {
+    const f = $('#newUserForm');
+    if(f) f.classList.add('hidden');
+  });
+}
+
+const newUserFormEl = $('#newUserForm');
+if(newUserFormEl){
+  newUserFormEl.addEventListener('submit', async e => {
+    e.preventDefault();
+    if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
+    const name = $('#nuName').value.trim();
+    const email = $('#nuEmail').value.trim();
+    const password = $('#nuPw').value;
+    const role = $('#nuRole').value;
+    const err = $('#nuErr');
+    err.classList.remove('show'); err.textContent = '';
+
+    if(!name){ err.textContent = 'الاسم مطلوب.'; err.classList.add('show'); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent = 'البريد الإلكتروني غير صالح.'; err.classList.add('show'); return; }
+    if(password.length < 6){ err.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.'; err.classList.add('show'); return; }
+
+    const btn = $('#btnSaveNewUser');
+    const old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'جارٍ الإنشاء…';
+    try{
+      await createUser({ name, email, password, role });
+      $('#newUserForm').classList.add('hidden');
+      renderUsersModal();
+      toast('تم إنشاء المستخدم', 'ok');
+    }catch(err2){
+      err.textContent = err2.message || 'تعذّر إنشاء المستخدم.';
+      err.classList.add('show');
+    }finally{
+      btn.disabled = false; btn.textContent = old;
+    }
+  });
+}
 
 /* ===================== تغيير كلمة المرور (مدير) ===================== */
 const pwModal = $('#pwModal');
@@ -1000,7 +1024,7 @@ let pwUserId = null;
 
 function openPwModal(u){
   if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
-  if(!u) return;
+  if(!u || !pwModal) return;
   pwUserId = u.id;
   $('#pwUserInfo').innerHTML =
     '<div class="p-name">' + esc(u.name) + '</div>' +
@@ -1013,20 +1037,24 @@ function openPwModal(u){
   setTimeout(() => $('#pwNew').focus(), 60);
 }
 function closePwModal(){
+  if(!pwModal) return;
   pwModal.classList.remove('open');
   pwModal.setAttribute('aria-hidden','true');
   pwUserId = null;
 }
 
-$('#pwClose').addEventListener('click', closePwModal);
-$('#pwCancel').addEventListener('click', closePwModal);
-pwModal.addEventListener('click', e => { if(e.target === pwModal) closePwModal(); });
+const pwCloseEl  = $('#pwClose');  if(pwCloseEl)  pwCloseEl.addEventListener('click', closePwModal);
+const pwCancelEl = $('#pwCancel'); if(pwCancelEl) pwCancelEl.addEventListener('click', closePwModal);
 
-$('#pwSave').addEventListener('click', async () => {
+if(pwModal){
+  pwModal.addEventListener('click', e => { if(e.target === pwModal) closePwModal(); });
+}
+
+async function savePw(){
   if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); return; }
   const u = users.find(x => x.id === pwUserId);
   if(!u){ closePwModal(); return; }
-  const pw = $('#pwNew').value;
+  const pw  = $('#pwNew').value;
   const pw2 = $('#pwNew2').value;
   const err = $('#pwErr');
   err.classList.remove('show'); err.textContent = '';
@@ -1044,23 +1072,34 @@ $('#pwSave').addEventListener('click', async () => {
     saveUsers();
     closePwModal();
     toast('تم تحديث كلمة المرور', 'ok');
-  }catch(err2){
+  }catch(_){
     err.textContent = 'تعذّر تحديث كلمة المرور.';
     err.classList.add('show');
   }finally{
     btn.disabled = false; btn.textContent = old;
   }
-});
+}
+
+const pwFormEl = $('#pwForm');
+if(pwFormEl){
+  pwFormEl.addEventListener('submit', e => { e.preventDefault(); savePw(); });
+} else {
+  const pwSaveEl = $('#pwSave');
+  if(pwSaveEl) pwSaveEl.addEventListener('click', savePw);
+}
 
 $$('[data-close-users]').forEach(el => {
   el.addEventListener('click', () => {
+    if(!usersModal) return;
     usersModal.classList.remove('open');
     usersModal.setAttribute('aria-hidden','true');
   });
 });
-usersModal.addEventListener('click', e => {
-  if(e.target === usersModal){
-    usersModal.classList.remove('open');
-    usersModal.setAttribute('aria-hidden','true');
-  }
-});
+if(usersModal){
+  usersModal.addEventListener('click', e => {
+    if(e.target === usersModal){
+      usersModal.classList.remove('open');
+      usersModal.setAttribute('aria-hidden','true');
+    }
+  });
+}

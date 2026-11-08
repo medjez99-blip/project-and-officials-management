@@ -3,7 +3,7 @@
    pass-through for Supabase / external APIs.
    ==================================================== */
 
-const VERSION   = 'v6';
+const VERSION   = 'v7';
 const SHELL     = 'shell-' + VERSION;
 const RUNTIME   = 'runtime-' + VERSION;
 
@@ -19,12 +19,18 @@ const PRECACHE = [
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/icon-maskable-512.png'
-  /* screenshots are optional — omit from precache to save bandwidth */
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(SHELL).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(SHELL).then(async c => {
+      await Promise.all(PRECACHE.map(async url => {
+        try {
+          const res = await fetch(url, { cache: 'reload' });   // ← bypass HTTP cache
+          if (res && res.ok) await c.put(url, res);
+        } catch (_) { /* ignore individual failures */ }
+      }));
+    }).then(() => self.skipWaiting())
   );
 });
 
