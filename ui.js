@@ -343,10 +343,8 @@ $('#signinForm').addEventListener('submit', async e => {
   const old = btn.textContent;
   btn.disabled = true; btn.textContent = 'جارٍ الدخول…';
   try{
-    const u = await verifyUser(email, pw);
-    if(!u) throw new Error('بيانات الدخول غير صحيحة.');
+        const u = await sbSignIn(email, pw);
     currentUser = u;
-    saveSession(u);
     $('#siPw').value = '';
     startApp();
     toast('مرحباً ' + u.name, 'ok');
@@ -388,8 +386,8 @@ $('#btnLogout').addEventListener('click', async () => {
     message: 'هل تريد تسجيل الخروج؟',
     okText: 'خروج'
   });
-  if(!ok) return;
-  clearSession();
+    if(!ok) return;
+  await sbSignOut();
   showAuth();
   toast('تم تسجيل الخروج', 'info');
 });
@@ -988,8 +986,9 @@ function renderUsersModal(){
 
 const btnUsersEl = $('#btnUsers');
 if(btnUsersEl){
-  btnUsersEl.addEventListener('click', () => {
+  btnUsersEl.addEventListener('click', async () => {
     if(!currentUser){ toast('يرجى تسجيل الدخول أولاً','bad'); return; }  // ← was isAdmin()
+    users = await sbFetchAllProfiles();
     renderUsersModal();
     usersModal.classList.add('open');
     usersModal.setAttribute('aria-hidden','false');

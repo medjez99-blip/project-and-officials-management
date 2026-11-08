@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v9_ar';
-const USERS_KEY = 'edu_users_v9';
-const SESSION_KEY = 'edu_session_v9';
+const STORE_KEY = 'edu_projects_v10_ar';
+const USERS_KEY = 'edu_users_v10';
+const SESSION_KEY = 'edu_session_v10';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -309,110 +309,83 @@ async function processPhoto(file, meta){
 
   return { blob, thumbDataUrl, width: w, height: h };
 }
+/* ===================== المصادقة — Supabase (Phase 2) ===================== */
 
-/* ===================== المصادقة (منطق) ===================== */
-function randomSalt(){
-  try{
-    const a = new Uint8Array(16);
-    crypto.getRandomValues(a);
-    return Array.from(a, b => b.toString(16).padStart(2,'0')).join('');
-  }catch(e){
-    return Math.random().toString(36).slice(2) + Date.now().toString(36);
-  }
+async function sbSignIn(email, password){
+  if(!window.sb) throw new Error('Supabase غير مهيأ');
+  const { data, error } = await window.sb.auth.signInWithPassword({ email, password });
+  if(error) throw new Error(error.message || 'بيانات الدخول غير صحيحة');
+  const u = data.user;
+  const profile = await sbFetchProfile(u.id);
+  return {
+    id: u.id,
+    email: u.email,
+    name: (profile && profile.name) || u.email.split('@')[0],
+    role: (profile && profile.role) || 'user'
+  };
 }
-function cyrb53(str, seed=0){
-  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-  for(let i=0;i<str.length;i++){
-    const ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
-  return (h2>>>0).toString(16).padStart(8,'0') + (h1>>>0).toString(16).padStart(8,'0');
-}
-async function hashPw(pw, salt){
-  const input = salt + '::' + pw;
-  if(window.crypto && crypto.subtle && window.isSecureContext){
-    try{
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-      return 'sha256:' + Array.from(new Uint8Array(buf), b=>b.toString(16).padStart(2,'0')).join('');
-    }catch(e){ /* fall through */ }
-  }
-  let h = input;
-  for(let i=0;i<120;i++) h = cyrb53(h, i);
-  return 'fb:' + h;
-}
-function loadUsers(){
-  try{
-    const raw = localStorage.getItem(USERS_KEY);
-    const arr = raw ? JSON.parse(raw) : null;
-    return Array.isArray(arr) ? arr : [];
-  }catch(e){ return []; }
-}
-function saveUsers(){
-  try{ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
-  catch(e){ toast('تعذّر حفظ المستخدمين','bad'); }
-}
-function findUserByEmail(email){
-  const e = String(email||'').trim().toLowerCase();
-  return users.find(u => u.email.toLowerCase() === e) || null;
-}
-async function createUser({ name, email, password, role }){
-  name = String(name||'').trim();
-  email = String(email||'').trim().toLowerCase();
-  if(!name) throw new Error('الاسم مطلوب.');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('البريد الإلكتروني غير صالح.');
-  if(String(password||'').length < 6) throw new Error('كلمة المرور يجب أن تكون 6 أحرف على الأقل.');
-  if(findUserByEmail(email)) throw new Error('هذا البريد مسجل بالفعل.');
-  const salt = randomSalt();
-  const hash = await hashPw(password, salt);
-  const u = { id: userUid(), name, email, role: role === 'admin' ? 'admin' : 'user', salt, hash, createdAt: new Date().toISOString() };
-  users.push(u);
-  saveUsers();
-  return u;
-}
-async function verifyUser(email, password){
-  const u = findUserByEmail(email);
-  if(!u) return null;
-  const h = await hashPw(password, u.salt);
-  return h === u.hash ? u : null;
-}
-function saveSession(u){
-  try{ localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: u.id, exp: Date.now() + SESSION_DAYS*DAY })); }catch(e){}
-}
-function loadSession(){
-  try{
-    const raw = localStorage.getItem(SESSION_KEY);
-    if(!raw) return null;
-    const s = JSON.parse(raw);
-    if(!s || !s.userId) return null;
-    if(s.exp && Date.now() > s.exp){ localStorage.removeItem(SESSION_KEY); return null; }
-    return s;
-  }catch(e){ return null; }
-}
-function clearSession(){ try{ localStorage.removeItem(SESSION_KEY); }catch(e){} }
 
-async function seedUsers(){
-  const demo = [
-    { name:'مدير النظام',      email:'admin@ministry.gov',    password:'Admin@123', role:'admin' },
-    { name:'فاطمة الزهراء',    email:'f.zahra@ministry.gov',  password:'User@123',  role:'user' },
-    { name:'عمر حداد',         email:'o.haddad@ministry.gov', password:'User@123',  role:'user' },
-    { name:'ليلى منصور',       email:'l.mansour@ministry.gov',password:'User@123',  role:'user' },
-    { name:'يوسف كريم',        email:'y.karim@ministry.gov',  password:'User@123',  role:'user' },
-    { name:'حسن علي',          email:'h.ali@ministry.gov',    password:'User@123',  role:'user' },
-    { name:'سارة نبيل',        email:'s.nabil@ministry.gov',  password:'User@123',  role:'user' }
-  ];
-  users = [];
-  for(const d of demo){ await createUser(d); }
+async function sbSignOut(){
+  if(!window.sb) return;
+  try { await window.sb.auth.signOut(); } catch(_){}
 }
+
+async function sbGetSession(){
+  if(!window.sb) return null;
+  const { data } = await window.sb.auth.getSession();
+  return (data && data.session) || null;
+}
+
+async function sbFetchProfile(userId){
+  if(!window.sb) return null;
+  const { data, error } = await window.sb
+    .from('profiles').select('*').eq('id', userId).maybeSingle();
+  if(error){ console.warn('profile fetch failed', error); return null; }
+  return data;
+}
+
+async function sbFetchAllProfiles(){
+  if(!window.sb) return [];
+  const { data, error } = await window.sb
+    .from('profiles').select('*').order('created_at');
+  if(error){ console.warn('profiles fetch failed', error); return []; }
+  return data || [];
+}
+
+/* Deprecated stubs — kept so existing UI code does not crash.
+   These will be removed in Phase 10 cleanup. */
+function saveSession(){}
+function loadSession(){ return null; }
+function clearSession(){}
+function randomSalt(){ return ''; }
+async function hashPw(){ return ''; }
+function loadUsers(){ return []; }
+function saveUsers(){}
+function findUserByEmail(){ return null; }
+async function createUser(){ throw new Error('إنشاء المستخدمين سيُفعَّل في مرحلة لاحقة.'); }
+async function verifyUser(){ return null; }
+async function seedUsers(){}
+
+function cleanupLegacyAuth(){
+  try{
+    ['edu_session_v1','edu_session_v2','edu_session_v3',
+     'edu_session_v4','edu_session_v5','edu_session_v6','edu_session_v7','edu_session_v8','edu_session_v9'].forEach(k => {
+      if(localStorage.getItem(k)) localStorage.removeItem(k);
+    });
+  }catch(_){}
+}
+
 async function bootAuth(){
   cleanupLegacyAuth();
-  users = loadUsers();
-  if(!users.length){ await seedUsers(); }
-  const s = loadSession();
-  if(s){
-    const u = users.find(x => x.id === s.userId);
-    if(u) currentUser = u;
+  users = await sbFetchAllProfiles();
+  const session = await sbGetSession();
+  if(session && session.user){
+    const profile = await sbFetchProfile(session.user.id);
+    currentUser = {
+      id: session.user.id,
+      email: session.user.email,
+      name: (profile && profile.name) || session.user.email.split('@')[0],
+      role: (profile && profile.role) || 'user'
+    };
   }
 }
