@@ -149,8 +149,9 @@ document.addEventListener('keydown', e => {
   if($('#lightbox').classList.contains('open')){ closeLightbox(); return; }
   if(newVisitModal.classList.contains('open')){ closeNewVisit(false); return; }
   if(visitsModal.classList.contains('open')){ closeVisitsModal(); return; }
-  if(modal.classList.contains('open')) closeModal();
+  if(modal.classList.contains('open')){ closeModal(); }
   if(progressModal.classList.contains('open')) closeProgress();
+  if($('#pwModal').classList.contains('open')){ closePwModal(); return; }
   if(usersModal.classList.contains('open')){
     usersModal.classList.remove('open');
     usersModal.setAttribute('aria-hidden','true');

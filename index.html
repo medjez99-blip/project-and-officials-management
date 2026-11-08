@@ -1,528 +1,565 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>وزارة التربية والتعليم — إدارة المشاريع والمسؤولين</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="main.css">
-<!-- PWA / Icons -->
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
-<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-<meta name="theme-color" content="#0B2A44">
-
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="إدارة المشاريع">
-<meta name="description" content="بوابة إدارة المشاريع والمسؤولين — وزارة التربية والتعليم">
-<meta name="robots" content="noindex, nofollow">
-</head>
-<body>
-
-<!-- ================= Auth screen ================= -->
-<div class="auth hidden" id="authScreen">
-  <div class="auth-card">
-    <aside class="auth-side">
-      <div class="brand">
-        <div class="brand-mark">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10L12 5 2 10l10 5 10-5z"/>
-            <path d="M6 12v5c3 2 9 2 12 0v-5"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>وزارة التربية والتعليم</h1>
-          <p>إدارة المشاريع والمسؤولين</p>
-        </div>
-      </div>
-
-      <div>
-        <h2>بوابة إدارة المشاريع</h2>
-        <p class="lead">سجّل الدخول لمتابعة مشاريعك ومهامك.</p>
-      </div>
-
-      <ul class="auth-points">
-        <li>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          مدير النظام يرى كل المشاريع، الزيارات والصور.
-        </li>
-        <li>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          المستخدم يحدّث التقدم ويسجّل زيارات بالموقع والصور.
-        </li>
-        <li>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          جلسة محفوظة في متصفحك — يمكنك تسجيل الخروج في أي وقت.
-        </li>
-      </ul>
-
-      <div class="auth-demo">
-        <strong>حسابات تجريبية</strong>
-        مدير: <code>admin@ministry.gov</code> / <code>Admin@123</code><br>
-        مستخدم: <code>f.zahra@ministry.gov</code> / <code>User@123</code>
-      </div>
-    </aside>
-
-    <section class="auth-main">
-      <div class="auth-tabs">
-        <button type="button" class="auth-tab active" data-tab="in">تسجيل الدخول</button>
-        <button type="button" class="auth-tab" data-tab="up">حساب جديد</button>
-      </div>
-
-      <form class="auth-form" id="signinForm" novalidate>
-        <div class="field">
-          <label for="siEmail">البريد الإلكتروني</label>
-          <input type="email" id="siEmail" placeholder="name@ministry.gov" autocomplete="username" dir="ltr">
-        </div>
-        <div class="field">
-          <label for="siPw">كلمة المرور</label>
-          <input type="password" id="siPw" placeholder="••••••••" autocomplete="current-password" dir="ltr">
-        </div>
-        <div class="auth-err" id="siErr"></div>
-        <button class="btn btn-primary auth-submit" type="submit">دخول</button>
-      </form>
-
-      <form class="auth-form hidden" id="signupForm" novalidate>
-        <div class="field">
-          <label for="suName">الاسم الكامل</label>
-          <input type="text" id="suName" placeholder="الاسم الكامل" autocomplete="name" maxlength="80">
-        </div>
-        <div class="field">
-          <label for="suEmail">البريد الإلكتروني</label>
-          <input type="email" id="suEmail" placeholder="name@ministry.gov" autocomplete="email" dir="ltr">
-        </div>
-        <div class="field">
-          <label for="suPw">كلمة المرور</label>
-          <input type="password" id="suPw" placeholder="6 أحرف على الأقل" autocomplete="new-password" dir="ltr">
-        </div>
-        <div class="field">
-          <label for="suPw2">تأكيد كلمة المرور</label>
-          <input type="password" id="suPw2" placeholder="أعد إدخال كلمة المرور" autocomplete="new-password" dir="ltr">
-        </div>
-        <div class="auth-err" id="suErr"></div>
-        <button class="btn btn-primary auth-submit" type="submit">إنشاء الحساب</button>
-        <p class="auth-foot">الحسابات الجديدة تُنشأ بصلاحية «مستخدم». يمكن لمدير النظام ترقيتها لاحقاً.</p>
-      </form>
-    </section>
-  </div>
-</div>
-
-<!-- ================= Topbar ================= -->
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="brand-mark">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 10L12 5 2 10l10 5 10-5z"/>
-          <path d="M6 12v5c3 2 9 2 12 0v-5"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <h1>وزارة التربية والتعليم</h1>
-        <p>إدارة المشاريع والمسؤولين</p>
-      </div>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn btn-gold admin-only" id="btnNew">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        مشروع جديد
-      </button>
-      <button class="btn btn-light admin-only" id="btnUsers">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-        </svg>
-        المستخدمون
-      </button>
-      <button class="btn btn-light" id="btnRemind">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 01-3.46 0"/>
-        </svg>
-        التذكيرات
-        <span class="bell-badge zero" id="bellCount">0</span>
-      </button>
-      <button class="btn btn-light admin-only" id="btnImport">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-        </svg>
-        استيراد
-      </button>
-
-<button class="btn btn-gold" id="btnInstall" style="display:none" title="تثبيت التطبيق على جهازك">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3v12"/>
-    <path d="M7 10l5 5 5-5"/>
-    <path d="M5 21h14"/>
-  </svg>
-  تثبيت
-</button>
-      <div class="user-chip">
-        <div class="avatar" id="userAvatar">—</div>
-        <div class="user-info">
-          <strong id="userName">—</strong>
-          <span id="userRole">—</span>
-        </div>
-        <button class="btn btn-light" id="btnLogout" title="تسجيل الخروج">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          خروج
-        </button>
-      </div>
-    </div>
-  </div>
-</header>
-
-<main>
-  <section class="stats" id="stats"></section>
-
-  <section class="reminders" id="reminderPanel">
-    <div class="reminders-head">
-      <div class="reminders-title">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-        <span id="reminderTitle">تذكيرات — مشاريع بحاجة إلى متابعة</span>
-      </div>
-      <span class="reminders-count" id="remindersCount">0</span>
-    </div>
-    <div class="reminders-list" id="remindersList"></div>
-  </section>
-
-  <section class="card">
-    <div class="toolbar">
-      <div class="search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input type="search" id="search" placeholder="ابحث عن مشروع، رمز، مدرسة، مسؤول…" autocomplete="off">
-      </div>
-      <select class="filter" id="filterStatus">
-        <option value="">كل الحالات</option>
-        <option value="planned">مخطط</option>
-        <option value="active">نشط</option>
-        <option value="onhold">معلّق</option>
-        <option value="completed">مكتمل</option>
-        <option value="cancelled">ملغى</option>
-      </select>
-      <select class="filter" id="filterPriority">
-        <option value="">كل الأولويات</option>
-        <option value="critical">حرج</option>
-        <option value="high">عالي</option>
-        <option value="medium">متوسط</option>
-        <option value="low">منخفض</option>
-      </select>
-      <select class="filter" id="filterEntity">
-        <option value="">كل الوحدات</option>
-        <option value="School">مدارس</option>
-        <option value="Office">مكاتب</option>
-        <option value="Directorate">مديريات</option>
-        <option value="Other">أخرى</option>
-      </select>
-      <select class="filter" id="filterSort">
-        <option value="due">ترتيب: تاريخ الاستحقاق</option>
-        <option value="priority">ترتيب: الأولوية</option>
-        <option value="name">ترتيب: الاسم</option>
-        <option value="progress">ترتيب: التقدم</option>
-        <option value="updated">ترتيب: آخر تحديث</option>
-      </select>
-      <div class="toolbar-end">
-        <button class="btn btn-ghost btn-sm admin-only" id="btnCsv">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          CSV
-        </button>
-        <button class="btn btn-ghost btn-sm admin-only" id="btnJson">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          نسخة احتياطية
-        </button>
-        <button class="btn btn-danger btn-sm admin-only" id="btnClear">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-          حذف الكل
-        </button>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>المشروع</th>
-            <th>المدرسة / المكتب</th>
-            <th>المسؤول</th>
-            <th>الحالة</th>
-            <th>الأولوية</th>
-            <th>الفترة</th>
-            <th>التقدم</th>
-            <th>التذكير</th>
-            <th style="text-align:left">الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </section>
-</main>
-
-<!-- ================= Project Modal (admin) ================= -->
-<div class="backdrop" id="modal" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-head">
-      <h2 id="modalTitle">مشروع جديد</h2>
-      <button class="close-btn" id="btnClose" title="إغلاق">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <form id="projectForm" novalidate>
-      <div class="modal-body">
-        <div class="form-grid">
-          <div class="field full" id="wrapName">
-            <label for="pName">اسم المشروع <span class="req">*</span></label>
-            <input type="text" id="pName" placeholder="مثال: تطوير مختبرات العلوم" maxlength="120">
-            <span class="err">اسم المشروع مطلوب.</span>
-          </div>
-          <div class="field">
-            <label for="pCode">رمز المشروع / المرجع</label>
-            <input type="text" id="pCode" placeholder="EDU-2026-014" maxlength="40">
-          </div>
-          <div class="field">
-            <label for="pEntityType">نوع الوحدة</label>
-            <select id="pEntityType">
-              <option value="School">مدرسة</option>
-              <option value="Office">مكتب</option>
-              <option value="Directorate">مديرية</option>
-              <option value="Other">أخرى</option>
-            </select>
-          </div>
-          <div class="field full">
-            <label for="pEntityName">اسم المدرسة / المكتب</label>
-            <input type="text" id="pEntityName" placeholder="مثال: ثانوية النور" maxlength="120">
-          </div>
-          <div class="field" id="wrapResp">
-            <label for="pResponsible">المسؤول <span class="req">*</span></label>
-            <input type="text" id="pResponsible" list="usersDatalist" placeholder="الاسم الكامل" maxlength="100" autocomplete="off">
-            <datalist id="usersDatalist"></datalist>
-            <span class="err">اسم المسؤول مطلوب.</span>
-          </div>
-          <div class="field">
-            <label for="pRole">المسمى الوظيفي</label>
-            <input type="text" id="pRole" placeholder="مثال: منسق المشروع" maxlength="80">
-          </div>
-          <div class="field">
-            <label for="pEmail">البريد الإلكتروني</label>
-            <input type="email" id="pEmail" placeholder="name@ministry.gov" maxlength="120" dir="ltr">
-          </div>
-          <div class="field">
-            <label for="pPhone">الهاتف</label>
-            <input type="text" id="pPhone" placeholder="+212 600 000 000" maxlength="40" dir="ltr">
-          </div>
-          <div class="field">
-            <label for="pStatus">الحالة</label>
-            <select id="pStatus">
-              <option value="planned">مخطط</option>
-              <option value="active">نشط</option>
-              <option value="onhold">معلّق</option>
-              <option value="completed">مكتمل</option>
-              <option value="cancelled">ملغى</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="pPriority">الأولوية</label>
-            <select id="pPriority">
-              <option value="critical">حرج</option>
-              <option value="high">عالي</option>
-              <option value="medium" selected>متوسط</option>
-              <option value="low">منخفض</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="pStart">تاريخ البدء</label>
-            <input type="date" id="pStart">
-          </div>
-          <div class="field" id="wrapEnd">
-            <label for="pEnd">تاريخ الانتهاء</label>
-            <input type="date" id="pEnd">
-            <span class="err">تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء.</span>
-          </div>
-          <div class="field full">
-            <label for="pProgress">نسبة التقدم</label>
-            <div class="range-row">
-              <input type="range" id="pProgress" min="0" max="100" step="5" value="0">
-              <span class="range-val" id="pProgressVal">0%</span>
-            </div>
-          </div>
-          <div class="field full">
-            <label for="pNotes">ملاحظات</label>
-            <textarea id="pNotes" placeholder="الميزانية، النطاق، جهات الاتصال، الخطوات التالية…" maxlength="1000"></textarea>
-          </div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-ghost" id="btnCancel">إلغاء</button>
-        <button type="submit" class="btn btn-primary" id="btnSave">حفظ المشروع</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ================= Progress Modal (user) ================= -->
-<div class="backdrop" id="progressModal" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" style="width:min(460px,100%)">
-    <div class="modal-head">
-      <h2>تحديث نسبة التقدم</h2>
-      <button class="close-btn" id="pmClose" title="إغلاق">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="pm-project" id="pmProject"></div>
-      <div class="field full">
-        <label for="pmProgress">نسبة التقدم</label>
-        <div class="range-row">
-          <input type="range" id="pmProgress" min="0" max="100" step="5" value="0">
-          <span class="range-val" id="pmProgressVal">0%</span>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="btn btn-ghost" id="pmCancel">إلغاء</button>
-      <button type="button" class="btn btn-primary" id="pmSave">حفظ التقدم</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= Visits Modal ================= -->
-<div class="backdrop" id="visitsModal" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" style="width:min(820px,100%)">
-    <div class="modal-head">
-      <h2 id="visitsTitle">سجل الزيارات</h2>
-      <button class="close-btn" data-close-visits title="إغلاق">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="pm-project" id="visitsProject"></div>
-      <div id="visitsNewSection"></div>
-      <div id="visitsList" class="visits-timeline"></div>
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="btn btn-ghost" data-close-visits>إغلاق</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= New Visit Modal ================= -->
-<div class="backdrop" id="newVisitModal" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" style="width:min(560px,100%)">
-    <div class="modal-head">
-      <h2>تسجيل زيارة جديدة</h2>
-      <button class="close-btn" data-close-new-visit title="إغلاق">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="pm-project" id="visitProject"></div>
-
-      <div class="field full" style="margin-bottom:14px">
-        <div class="field-label">الموقع <span style="color:var(--muted);font-weight:500;font-size:11px">(يُحدَّد تلقائياً)</span></div>
-        <div class="location-box pending" id="visitLocationBox">جارٍ تحديد الموقع…</div>
-        <button type="button" class="btn btn-ghost btn-sm" id="btnRetryLoc" style="align-self:flex-start;margin-top:6px">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-          إعادة المحاولة
-        </button>
-      </div>
-
-      <div class="field full" style="margin-bottom:14px">
-        <label for="visitNotes">ملاحظات</label>
-        <textarea id="visitNotes" placeholder="ما الذي لاحظته خلال الزيارة؟" maxlength="1000"></textarea>
-      </div>
-
-      <div class="field full">
-        <label for="btnChoosePhotos">الصور <span style="color:var(--muted);font-weight:500;font-size:11px">(حتى 10 صور، تُختم بالتاريخ والموقع)</span></label>
-        <input type="file" id="visitCamInput" accept="image/*" capture="environment" style="display:none">
-        <input type="file" id="visitFileInput" accept="image/*" multiple style="display:none">
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button type="button" class="btn btn-ghost btn-sm" id="btnTakePhoto">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            التقاط صورة
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm" id="btnChoosePhotos">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            من المعرض
-          </button>
-        </div>
-        <div class="photo-grid" id="visitPhotoPreview" style="margin-top:12px"></div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="btn btn-ghost" data-close-new-visit>إلغاء</button>
-      <button type="button" class="btn btn-primary" id="btnSaveVisit">حفظ الزيارة</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= Users Modal (admin) ================= -->
-<div class="backdrop" id="usersModal" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" style="width:min(640px,100%)">
-    <div class="modal-head">
-      <h2>إدارة المستخدمين</h2>
-      <button class="close-btn" data-close-users title="إغلاق">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <p class="muted-note">يمكنك ترقية مستخدم إلى «مدير» أو إعادته إلى «مستخدم». لا يمكنك تعديل صلاحيتك أو حذف حسابك الحالي. الحسابات الجديدة تُنشأ من شاشة الدخول.</p>
-      <div id="usersList"></div>
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="btn btn-ghost" data-close-users>إغلاق</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================= Photo Lightbox ================= -->
-<div class="lightbox" id="lightbox" aria-hidden="true">
-  <button class="lightbox-close" id="lightboxClose" title="إغلاق">✕</button>
-  <img id="lightboxImg" alt="">
-  <a class="lightbox-download" id="lightboxDownload" download="visit-photo.jpg">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-    تحميل الصورة
-  </a>
-</div>
-
-<input type="file" id="fileImport" accept="application/json,.json" style="display:none">
-<div class="toasts" id="toasts"></div>
-<script src="config.js"></script>
-<!-- <script src="supabase.js"></script> -->
-<script src="core.js"></script>
-<script src="ui.js"></script>
-<script src="app.js"></script>
-<!-- Supabase config must load before core.js (it defines window.APP_CONFIG) -->
-<!-- So actually move: <script src="config.js"></script> ABOVE core.js -->
-<script>
-  window.__pwaDeferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
-    window.__pwaDeferredPrompt = e;
-    try { window.dispatchEvent(new Event('pwa-prompt-ready')); } catch (_) {}
-  });
-</script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(() => console.log('[PWA] Service worker registered'))
-        .catch(err => console.warn('[PWA] SW registration failed', err));
-    });
-  }
-</script>
-</body>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>وزارة التربية والتعليم — إدارة المشاريع والمسؤولين</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="main.css">
+		<!-- PWA / Icons -->
+		<link rel="manifest" href="manifest.json">
+		<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+		<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+		<meta name="theme-color" content="#0B2A44">
+		
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="إدارة المشاريع">
+		<meta name="description" content="بوابة إدارة المشاريع والمسؤولين — وزارة التربية والتعليم">
+		<meta name="robots" content="noindex, nofollow">
+	</head>
+	<body>
+		
+		<!-- ================= Auth screen ================= -->
+		<div class="auth hidden" id="authScreen">
+			<div class="auth-card">
+				<aside class="auth-side">
+					<div class="brand">
+						<div class="brand-mark">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M22 10L12 5 2 10l10 5 10-5z"/>
+								<path d="M6 12v5c3 2 9 2 12 0v-5"/>
+							</svg>
+						</div>
+						<div class="brand-text">
+							<h1>وزارة التربية والتعليم</h1>
+							<p>إدارة المشاريع والمسؤولين</p>
+						</div>
+					</div>
+					
+					<div>
+						<h2>بوابة إدارة المشاريع</h2>
+						<p class="lead">سجّل الدخول لمتابعة مشاريعك ومهامك.</p>
+					</div>
+					
+					<ul class="auth-points">
+						<li>
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+							مدير النظام يرى كل المشاريع، الزيارات والصور.
+						</li>
+						<li>
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+							المستخدم يحدّث التقدم ويسجّل زيارات بالموقع والصور.
+						</li>
+						<li>
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+							جلسة محفوظة في متصفحك — يمكنك تسجيل الخروج في أي وقت.
+						</li>
+					</ul>
+					
+					<div class="auth-demo">
+						<strong>حسابات تجريبية</strong>
+						مدير: <code>admin@ministry.gov</code> / <code>Admin@123</code><br>
+						مستخدم: <code>f.zahra@ministry.gov</code> / <code>User@123</code>
+					</div>
+				</aside>
+				
+				<section class="auth-main">
+					<form class="auth-form" id="signinForm" novalidate>
+						<div class="field">
+							<label for="siEmail">البريد الإلكتروني</label>
+							<input type="email" id="siEmail" placeholder="name@ministry.gov" autocomplete="username" dir="ltr">
+						</div>
+						<div class="field">
+							<label for="siPw">كلمة المرور</label>
+							<input type="password" id="siPw" placeholder="••••••••" autocomplete="current-password" dir="ltr">
+						</div>
+						<div class="auth-err" id="siErr"></div>
+						<button class="btn btn-primary auth-submit" type="submit">دخول</button>
+						<p class="auth-foot">لإنشاء حساب جديد، يرجى التواصل مع مدير النظام.</p>
+					</form>
+				</section>
+			</div>
+		</div>
+		
+		<!-- ================= Topbar ================= -->
+		<header class="topbar">
+			<div class="topbar-inner">
+				<div class="brand">
+					<div class="brand-mark">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M22 10L12 5 2 10l10 5 10-5z"/>
+							<path d="M6 12v5c3 2 9 2 12 0v-5"/>
+						</svg>
+					</div>
+					<div class="brand-text">
+						<h1>وزارة التربية والتعليم</h1>
+						<p>إدارة المشاريع والمسؤولين</p>
+					</div>
+				</div>
+				<div class="topbar-actions">
+					<button class="btn btn-gold admin-only" id="btnNew">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+						مشروع جديد
+					</button>
+					<button class="btn btn-light" id="btnUsers">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+							<circle cx="9" cy="7" r="4"/>
+							<path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+						</svg>
+						المستخدمون
+					</button>
+					<button class="btn btn-light" id="btnRemind">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+							<path d="M13.73 21a2 2 0 01-3.46 0"/>
+						</svg>
+						التذكيرات
+						<span class="bell-badge zero" id="bellCount">0</span>
+					</button>
+					<button class="btn btn-light admin-only" id="btnImport">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+						</svg>
+						استيراد
+					</button>
+					
+					<button class="btn btn-gold" id="btnInstall" style="display:none" title="تثبيت التطبيق على جهازك">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M12 3v12"/>
+							<path d="M7 10l5 5 5-5"/>
+							<path d="M5 21h14"/>
+						</svg>
+						تثبيت
+					</button>
+					<div class="user-chip">
+						<div class="avatar" id="userAvatar">—</div>
+						<div class="user-info">
+							<strong id="userName">—</strong>
+							<span id="userRole">—</span>
+						</div>
+						<button class="btn btn-light" id="btnLogout" title="تسجيل الخروج">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+								<polyline points="16 17 21 12 16 7"/>
+								<line x1="21" y1="12" x2="9" y2="12"/>
+							</svg>
+							خروج
+						</button>
+					</div>
+				</div>
+			</div>
+		</header>
+		
+		<main>
+			<section class="stats" id="stats"></section>
+			
+			<section class="reminders" id="reminderPanel">
+				<div class="reminders-head">
+					<div class="reminders-title">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="12" cy="12" r="10"/>
+							<polyline points="12 6 12 12 16 14"/>
+						</svg>
+						<span id="reminderTitle">تذكيرات — مشاريع بحاجة إلى متابعة</span>
+					</div>
+					<span class="reminders-count" id="remindersCount">0</span>
+				</div>
+				<div class="reminders-list" id="remindersList"></div>
+			</section>
+			
+			<section class="card">
+				<div class="toolbar">
+					<div class="search">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+						</svg>
+						<input type="search" id="search" placeholder="ابحث عن مشروع، رمز، مدرسة، مسؤول…" autocomplete="off">
+					</div>
+					<select class="filter" id="filterStatus">
+						<option value="">كل الحالات</option>
+						<option value="planned">مخطط</option>
+						<option value="active">نشط</option>
+						<option value="onhold">معلّق</option>
+						<option value="completed">مكتمل</option>
+						<option value="cancelled">ملغى</option>
+					</select>
+					<select class="filter" id="filterPriority">
+						<option value="">كل الأولويات</option>
+						<option value="critical">حرج</option>
+						<option value="high">عالي</option>
+						<option value="medium">متوسط</option>
+						<option value="low">منخفض</option>
+					</select>
+					<select class="filter" id="filterEntity">
+						<option value="">كل الوحدات</option>
+						<option value="School">مدارس</option>
+						<option value="Office">مكاتب</option>
+						<option value="Directorate">مديريات</option>
+						<option value="Other">أخرى</option>
+					</select>
+					<select class="filter" id="filterSort">
+						<option value="due">ترتيب: تاريخ الاستحقاق</option>
+						<option value="priority">ترتيب: الأولوية</option>
+						<option value="name">ترتيب: الاسم</option>
+						<option value="progress">ترتيب: التقدم</option>
+						<option value="updated">ترتيب: آخر تحديث</option>
+					</select>
+					<div class="toolbar-end">
+						<button class="btn btn-ghost btn-sm admin-only" id="btnCsv">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+							CSV
+						</button>
+						<button class="btn btn-ghost btn-sm admin-only" id="btnJson">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+							نسخة احتياطية
+						</button>
+						<button class="btn btn-danger btn-sm admin-only" id="btnClear">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+							حذف الكل
+						</button>
+					</div>
+				</div>
+				
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>المشروع</th>
+								<th>المدرسة / المكتب</th>
+								<th>المسؤول</th>
+								<th>الحالة</th>
+								<th>الأولوية</th>
+								<th>الفترة</th>
+								<th>التقدم</th>
+								<th>التذكير</th>
+								<th style="text-align:left">الإجراءات</th>
+							</tr>
+						</thead>
+						<tbody id="tbody"></tbody>
+					</table>
+				</div>
+			</section>
+		</main>
+		
+		<!-- ================= Project Modal (admin) ================= -->
+		<div class="backdrop" id="modal" aria-hidden="true">
+			<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+				<div class="modal-head">
+					<h2 id="modalTitle">مشروع جديد</h2>
+					<button class="close-btn" id="btnClose" title="إغلاق">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<form id="projectForm" novalidate>
+					<div class="modal-body">
+						<div class="form-grid">
+							<div class="field full" id="wrapName">
+								<label for="pName">اسم المشروع <span class="req">*</span></label>
+								<input type="text" id="pName" placeholder="مثال: تطوير مختبرات العلوم" maxlength="120">
+								<span class="err">اسم المشروع مطلوب.</span>
+							</div>
+							<div class="field">
+								<label for="pCode">رمز المشروع / المرجع</label>
+								<input type="text" id="pCode" placeholder="EDU-2026-014" maxlength="40">
+							</div>
+							<div class="field">
+								<label for="pEntityType">نوع الوحدة</label>
+								<select id="pEntityType">
+									<option value="School">مدرسة</option>
+									<option value="Office">مكتب</option>
+									<option value="Directorate">مديرية</option>
+									<option value="Other">أخرى</option>
+								</select>
+							</div>
+							<div class="field full">
+								<label for="pEntityName">اسم المدرسة / المكتب</label>
+								<input type="text" id="pEntityName" placeholder="مثال: ثانوية النور" maxlength="120">
+							</div>
+							<div class="field" id="wrapResp">
+								<label for="pResponsible">المسؤول <span class="req">*</span></label>
+								<input type="text" id="pResponsible" list="usersDatalist" placeholder="الاسم الكامل" maxlength="100" autocomplete="off">
+								<datalist id="usersDatalist"></datalist>
+								<span class="err">اسم المسؤول مطلوب.</span>
+							</div>
+							<div class="field">
+								<label for="pRole">المسمى الوظيفي</label>
+								<input type="text" id="pRole" placeholder="مثال: منسق المشروع" maxlength="80">
+							</div>
+							<div class="field">
+								<label for="pEmail">البريد الإلكتروني</label>
+								<input type="email" id="pEmail" placeholder="name@ministry.gov" maxlength="120" dir="ltr">
+							</div>
+							<div class="field">
+								<label for="pPhone">الهاتف</label>
+								<input type="text" id="pPhone" placeholder="+212 600 000 000" maxlength="40" dir="ltr">
+							</div>
+							<div class="field">
+								<label for="pStatus">الحالة</label>
+								<select id="pStatus">
+									<option value="planned">مخطط</option>
+									<option value="active">نشط</option>
+									<option value="onhold">معلّق</option>
+									<option value="completed">مكتمل</option>
+									<option value="cancelled">ملغى</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="pPriority">الأولوية</label>
+								<select id="pPriority">
+									<option value="critical">حرج</option>
+									<option value="high">عالي</option>
+									<option value="medium" selected>متوسط</option>
+									<option value="low">منخفض</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="pStart">تاريخ البدء</label>
+								<input type="date" id="pStart">
+							</div>
+							<div class="field" id="wrapEnd">
+								<label for="pEnd">تاريخ الانتهاء</label>
+								<input type="date" id="pEnd">
+								<span class="err">تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء.</span>
+							</div>
+							<div class="field full">
+								<label for="pProgress">نسبة التقدم</label>
+								<div class="range-row">
+									<input type="range" id="pProgress" min="0" max="100" step="5" value="0">
+									<span class="range-val" id="pProgressVal">0%</span>
+								</div>
+							</div>
+							<div class="field full">
+								<label for="pNotes">ملاحظات</label>
+								<textarea id="pNotes" placeholder="الميزانية، النطاق، جهات الاتصال، الخطوات التالية…" maxlength="1000"></textarea>
+							</div>
+						</div>
+					</div>
+					<div class="modal-foot">
+						<button type="button" class="btn btn-ghost" id="btnCancel">إلغاء</button>
+						<button type="submit" class="btn btn-primary" id="btnSave">حفظ المشروع</button>
+					</div>
+				</form>
+			</div>
+		</div>
+		
+		<!-- ================= Progress Modal (user) ================= -->
+		<div class="backdrop" id="progressModal" aria-hidden="true">
+			<div class="modal" role="dialog" aria-modal="true" style="width:min(460px,100%)">
+				<div class="modal-head">
+					<h2>تحديث نسبة التقدم</h2>
+					<button class="close-btn" id="pmClose" title="إغلاق">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="pm-project" id="pmProject"></div>
+					<div class="field full">
+						<label for="pmProgress">نسبة التقدم</label>
+						<div class="range-row">
+							<input type="range" id="pmProgress" min="0" max="100" step="5" value="0">
+							<span class="range-val" id="pmProgressVal">0%</span>
+						</div>
+					</div>
+				</div>
+				<div class="modal-foot">
+					<button type="button" class="btn btn-ghost" id="pmCancel">إلغاء</button>
+					<button type="button" class="btn btn-primary" id="pmSave">حفظ التقدم</button>
+				</div>
+			</div>
+		</div>
+		
+		<!-- ================= Visits Modal ================= -->
+		<div class="backdrop" id="visitsModal" aria-hidden="true">
+			<div class="modal" role="dialog" aria-modal="true" style="width:min(820px,100%)">
+				<div class="modal-head">
+					<h2 id="visitsTitle">سجل الزيارات</h2>
+					<button class="close-btn" data-close-visits title="إغلاق">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="pm-project" id="visitsProject"></div>
+					<div id="visitsNewSection"></div>
+					<div id="visitsList" class="visits-timeline"></div>
+				</div>
+				<div class="modal-foot">
+					<button type="button" class="btn btn-ghost" data-close-visits>إغلاق</button>
+				</div>
+			</div>
+		</div>
+		
+		<!-- ================= New Visit Modal ================= -->
+		<div class="backdrop" id="newVisitModal" aria-hidden="true">
+			<div class="modal" role="dialog" aria-modal="true" style="width:min(560px,100%)">
+				<div class="modal-head">
+					<h2>تسجيل زيارة جديدة</h2>
+					<button class="close-btn" data-close-new-visit title="إغلاق">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="pm-project" id="visitProject"></div>
+					
+					<div class="field full" style="margin-bottom:14px">
+						<div class="field-label">الموقع <span style="color:var(--muted);font-weight:500;font-size:11px">(يُحدَّد تلقائياً)</span></div>
+						<div class="location-box pending" id="visitLocationBox">جارٍ تحديد الموقع…</div>
+						<button type="button" class="btn btn-ghost btn-sm" id="btnRetryLoc" style="align-self:flex-start;margin-top:6px">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+							إعادة المحاولة
+						</button>
+					</div>
+					
+					<div class="field full" style="margin-bottom:14px">
+						<label for="visitNotes">ملاحظات</label>
+						<textarea id="visitNotes" placeholder="ما الذي لاحظته خلال الزيارة؟" maxlength="1000"></textarea>
+					</div>
+					
+					<div class="field full">
+						<label for="btnChoosePhotos">الصور <span style="color:var(--muted);font-weight:500;font-size:11px">(حتى 10 صور، تُختم بالتاريخ والموقع)</span></label>
+						<input type="file" id="visitCamInput" accept="image/*" capture="environment" style="display:none">
+						<input type="file" id="visitFileInput" accept="image/*" multiple style="display:none">
+						<div style="display:flex;gap:8px;flex-wrap:wrap">
+							<button type="button" class="btn btn-ghost btn-sm" id="btnTakePhoto">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+								التقاط صورة
+							</button>
+							<button type="button" class="btn btn-ghost btn-sm" id="btnChoosePhotos">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+								من المعرض
+							</button>
+						</div>
+						<div class="photo-grid" id="visitPhotoPreview" style="margin-top:12px"></div>
+					</div>
+				</div>
+				<div class="modal-foot">
+					<button type="button" class="btn btn-ghost" data-close-new-visit>إلغاء</button>
+					<button type="button" class="btn btn-primary" id="btnSaveVisit">حفظ الزيارة</button>
+				</div>
+			</div>
+		</div>
+		
+		<!-- ================= Users Modal (admin) ================= -->
+		<div class="backdrop" id="usersModal" aria-hidden="true">
+			<div class="modal" role="dialog" aria-modal="true" style="width:min(720px,100%)">
+				<div class="modal-head">
+					<h2>المستخدمون</h2>
+					<button class="close-btn" data-close-users title="إغلاق">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p class="muted-note" id="usersModalNote"></p>
+					
+					<div class="admin-only" id="newUserSection" style="margin-bottom:16px">
+						<button class="btn btn-primary btn-sm" id="btnShowNewUser" type="button">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+							مستخدم جديد
+						</button>
+						<form id="newUserForm" class="hidden" novalidate
+						style="margin-top:12px;padding:14px;background:#F8FAFC;border:1px solid var(--line);border-radius:10px">
+							<div class="form-grid">
+								<div class="field">
+									<label for="nuName">الاسم الكامل</label>
+									<input type="text" id="nuName" maxlength="80" placeholder="الاسم الكامل" autocomplete="off">
+								</div>
+								<div class="field">
+									<label for="nuEmail">البريد الإلكتروني</label>
+									<input type="email" id="nuEmail" dir="ltr" placeholder="name@ministry.gov" autocomplete="off">
+								</div>
+								<div class="field">
+									<label for="nuPw">كلمة المرور</label>
+									<input type="password" id="nuPw" dir="ltr" placeholder="6 أحرف على الأقل" autocomplete="new-password">
+								</div>
+								<div class="field">
+									<label for="nuRole">الصلاحية</label>
+									<select id="nuRole">
+										<option value="user">مستخدم</option>
+										<option value="admin">مدير</option>
+									</select>
+								</div>
+							</div>
+							<div class="auth-err" id="nuErr" style="margin-top:10px"></div>
+							<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+								<button type="button" class="btn btn-ghost btn-sm" id="btnCancelNewUser">إلغاء</button>
+								<button type="submit" class="btn btn-primary btn-sm" id="btnSaveNewUser">إنشاء المستخدم</button>
+							</div>
+						</form>
+					</div>
+					
+					<div id="usersList"></div>
+				</div>
+				<div class="modal-foot">
+					<button type="button" class="btn btn-ghost" data-close-users>إغلاق</button>
+				</div>
+			</div>
+		</div>
+		<!-- ================= Password Change Modal (admin) ================= -->
+		<div class="backdrop" id="pwModal" aria-hidden="true">
+			<div class="modal" role="dialog" aria-modal="true" style="width:min(440px,100%)">
+				<div class="modal-head">
+					<h2>تغيير كلمة المرور</h2>
+					<button class="close-btn" id="pwClose" title="إغلاق">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="pm-project" id="pwUserInfo"></div>
+					<div class="field full">
+						<label for="pwNew">كلمة المرور الجديدة</label>
+						<input type="password" id="pwNew" dir="ltr" placeholder="6 أحرف على الأقل" autocomplete="new-password">
+					</div>
+					<div class="field full" style="margin-top:12px">
+						<label for="pwNew2">تأكيد كلمة المرور</label>
+						<input type="password" id="pwNew2" dir="ltr" placeholder="أعد إدخال كلمة المرور" autocomplete="new-password">
+					</div>
+					<div class="auth-err" id="pwErr" style="margin-top:12px"></div>
+				</div>
+				<div class="modal-foot">
+					<button type="button" class="btn btn-ghost" id="pwCancel">إلغاء</button>
+					<button type="button" class="btn btn-primary" id="pwSave">حفظ كلمة المرور</button>
+				</div>
+			</div>
+		</div>
+		<!-- ================= Photo Lightbox ================= -->
+		<div class="lightbox" id="lightbox" aria-hidden="true">
+			<button class="lightbox-close" id="lightboxClose" title="إغلاق">✕</button>
+			<img id="lightboxImg" alt="">
+			<a class="lightbox-download" id="lightboxDownload" download="visit-photo.jpg">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+				تحميل الصورة
+			</a>
+		</div>
+		
+		<input type="file" id="fileImport" accept="application/json,.json" style="display:none">
+		<div class="toasts" id="toasts"></div>
+		<script src="config.js"></script>
+		<!-- <script src="supabase.js"></script> -->
+		<script src="core.js"></script>
+		<script src="ui.js"></script>
+		<script src="app.js"></script>
+		<!-- Supabase config must load before core.js (it defines window.APP_CONFIG) -->
+		<!-- So actually move: <script src="config.js"></script> ABOVE core.js -->
+		<script>
+			window.__pwaDeferredPrompt = null;
+			window.addEventListener('beforeinstallprompt', function (e) {
+				e.preventDefault();
+				window.__pwaDeferredPrompt = e;
+				try { window.dispatchEvent(new Event('pwa-prompt-ready')); } catch (_) {}
+			});
+		</script>
+		<script>
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('/sw.js', { scope: '/' })
+					.then(() => console.log('[PWA] Service worker registered'))
+					.catch(err => console.warn('[PWA] SW registration failed', err));
+				});
+			}
+		</script>
+	</body>
 </html>
