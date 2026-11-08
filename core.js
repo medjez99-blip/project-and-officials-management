@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v11_ar';
-const USERS_KEY = 'edu_users_v11';
-const SESSION_KEY = 'edu_session_v11';
+const STORE_KEY = 'edu_projects_v12_ar';
+const USERS_KEY = 'edu_users_v12';
+const SESSION_KEY = 'edu_session_v12';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -236,7 +236,6 @@ async function clearSyncQueue(){
     tx.onerror    = () => resolve();
   });
 }
-
 async function countSyncQueue(){
   const db = await openDB();
   return new Promise((resolve) => {
@@ -245,6 +244,44 @@ async function countSyncQueue(){
     req.onsuccess = () => resolve(req.result || 0);
     req.onerror   = () => resolve(0);
   });
+}
+/* ===================== Sync: diff-based enqueue (Phase 4b) ===================== */
+let _lastSyncSnapshot = null;   // Map<projectId, JSON string>
+
+async function saveWithSync(){
+  // 1) Build the "current" view of all projects
+  const currentMap = new Map();
+  for(const p of projects){
+    currentMap.set(p.id, JSON.stringify(p));
+  }
+
+  // 2) Snapshot FIRST so re-entrant renders don't double-queue
+  const prev = _lastSyncSnapshot;
+  _lastSyncSnapshot = currentMap;
+
+  // 3) Persist to localStorage immediately — never lose data if enqueue fails
+  save();
+
+  if(!prev) return; // very first call after boot: nothing to diff against
+
+  // 4) Queue upserts for new or changed projects
+  for(const [id, json] of currentMap){
+    if(prev.get(id) !== json){
+      const proj = projects.find(x => x.id === id);
+      if(proj){
+        try { await enqueueSync('project', 'upsert', proj, id); }
+        catch(e){ console.warn('enqueue upsert failed', e); }
+      }
+    }
+  }
+
+  // 5) Queue deletes for projects that disappeared
+  for(const id of prev.keys()){
+    if(!currentMap.has(id)){
+      try { await enqueueSync('project', 'delete', { id }, id); }
+      catch(e){ console.warn('enqueue delete failed', e); }
+    }
+  }
 }
 /* ===================== تخزين المشاريع ===================== */
 function save(){

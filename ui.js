@@ -289,7 +289,7 @@ function render(){
   renderStats();
   renderReminders();
   renderTable();
-  save();
+  saveWithSync();
 }
 
 /* ===================== واجهة المصادقة (رسم) ===================== */
