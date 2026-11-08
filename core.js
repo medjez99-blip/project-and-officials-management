@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v10_ar';
-const USERS_KEY = 'edu_users_v10';
-const SESSION_KEY = 'edu_session_v10';
+const STORE_KEY = 'edu_projects_v11_ar';
+const USERS_KEY = 'edu_users_v11';
+const SESSION_KEY = 'edu_session_v11';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -107,8 +107,9 @@ function toast(msg, kind){
 
 /* ===================== IndexedDB (الصور) ===================== */
 const DB_NAME = 'edu_photos_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const PHOTOS_STORE = 'photos';
+const SYNC_STORE = 'sync_queue';
 let _dbPromise = null;
 
 function openDB(){
@@ -118,7 +119,14 @@ function openDB(){
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      if(!db.objectStoreNames.contains(PHOTOS_STORE)) db.createObjectStore(PHOTOS_STORE, { keyPath: 'id' });
+      if(!db.objectStoreNames.contains(PHOTOS_STORE)){
+        db.createObjectStore(PHOTOS_STORE, { keyPath: 'id' });
+      }
+      if(!db.objectStoreNames.contains(SYNC_STORE)){
+        const s = db.createObjectStore(SYNC_STORE, { keyPath: 'id', autoIncrement: true });
+        s.createIndex('createdAt', 'createdAt');
+        s.createIndex('projectId', 'projectId');
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -173,7 +181,71 @@ async function deletePhotoFromDB(id){
 async function deletePhotosFromDB(ids){
   for(const id of (ids || [])) await deletePhotoFromDB(id);
 }
+/* ===================== Sync queue (Phase 4a) ===================== */
+/* Every write we intend to push to Supabase is enqueued here. */
+async function enqueueSync(entity, op, payload, projectId){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SYNC_STORE, 'readwrite');
+    const store = tx.objectStore(SYNC_STORE);
+    const item = {
+      entity,                    // 'project' | 'visit' | 'photo'
+      op,                        // 'upsert' | 'delete'
+      payload,                   // plain object
+      projectId: projectId || null,
+      createdAt: Date.now(),
+      retries: 0
+    };
+    const req = store.add(item);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
 
+async function listSyncQueue(){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SYNC_STORE, 'readonly');
+    const store = tx.objectStore(SYNC_STORE);
+    const out = [];
+    store.openCursor().onsuccess = e => {
+      const cur = e.target.result;
+      if(cur){ out.push({ _key: cur.primaryKey, ...cur.value }); cur.continue(); }
+      else resolve(out);
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function removeSyncItem(id){
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(SYNC_STORE, 'readwrite');
+    tx.objectStore(SYNC_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => resolve();
+  });
+}
+
+async function clearSyncQueue(){
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(SYNC_STORE, 'readwrite');
+    tx.objectStore(SYNC_STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => resolve();
+  });
+}
+
+async function countSyncQueue(){
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(SYNC_STORE, 'readonly');
+    const req = tx.objectStore(SYNC_STORE).count();
+    req.onsuccess = () => resolve(req.result || 0);
+    req.onerror   = () => resolve(0);
+  });
+}
 /* ===================== تخزين المشاريع ===================== */
 function save(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(projects)); }
