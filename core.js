@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v8_ar';
-const USERS_KEY = 'edu_users_v8';
-const SESSION_KEY = 'edu_session_v8';
+const STORE_KEY = 'edu_projects_v9_ar';
+const USERS_KEY = 'edu_users_v9';
+const SESSION_KEY = 'edu_session_v9';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
