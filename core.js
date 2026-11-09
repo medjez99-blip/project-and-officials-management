@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v13_ar';
-const USERS_KEY = 'edu_users_v13';
-const SESSION_KEY = 'edu_session_v13';
+const STORE_KEY = 'edu_projects_v15_ar';
+const USERS_KEY = 'edu_users_v15';
+const SESSION_KEY = 'edu_session_v15';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -585,6 +585,10 @@ function cleanupLegacyAuth(){
 
 async function bootAuth(){
   cleanupLegacyAuth();
+  // Wait up to 3s for window.sb (module scripts are deferred)
+  for(let i = 0; i < 30 && !window.sb; i++){
+    await new Promise(r => setTimeout(r, 100));
+  }
   users = await sbFetchAllProfiles();
   const session = await sbGetSession();
   if(session && session.user){

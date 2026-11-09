@@ -360,6 +360,7 @@ $('#signinForm').addEventListener('submit', async e => {
   try{
         const u = await sbSignIn(email, pw);
     currentUser = u;
+    users = await sbFetchAllProfiles();   // ← NEW
     $('#siPw').value = '';
     startApp();
     toast('مرحباً ' + u.name, 'ok');
