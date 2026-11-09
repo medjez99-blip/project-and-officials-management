@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v17_ar';
-const USERS_KEY = 'edu_users_v17';
-const SESSION_KEY = 'edu_session_v17';
+const STORE_KEY = 'edu_projects_v18_ar';
+const USERS_KEY = 'edu_users_v18';
+const SESSION_KEY = 'edu_session_v18';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -67,14 +67,6 @@ function daysLabel(n){
   if(n === 2) return 'يومان';
   if(n >= 3 && n <= 10) return n + ' أيام';
   return n + ' يومًا';
-}
-function cleanupLegacyAuth(){
-  try{
-    ['edu_session_v1','edu_session_v2','edu_session_v3',
-     'edu_session_v4','edu_session_v5','edu_session_v6'].forEach(k => {
-      if(localStorage.getItem(k)) localStorage.removeItem(k);
-    });
-  }catch(_){}
 }
 /* --- الأدوار --- */
 const isAdmin = () => !!currentUser && currentUser.role === 'admin';
@@ -247,7 +239,26 @@ async function countSyncQueue(){
 }
 /* ===================== Sync: diff-based enqueue (Phase 4b) ===================== */
 let _lastSyncSnapshot = null;   // Map<projectId, JSON string>
+/* ===================== Sync: delete tombstones (Phase 4d-fix) ===================== */
+const DELETED_KEY = 'edu_deleted_ids_v1';
 
+function getDeletedIds(){
+  try { return new Set(JSON.parse(localStorage.getItem(DELETED_KEY) || '[]')); }
+  catch(_) { return new Set(); }
+}
+function markDeletedLocally(id){
+  try {
+    const arr = JSON.parse(localStorage.getItem(DELETED_KEY) || '[]');
+    if(!arr.includes(id)){ arr.push(id); localStorage.setItem(DELETED_KEY, JSON.stringify(arr)); }
+  } catch(_) {}
+}
+function unmarkDeletedLocally(id){
+  try {
+    const arr = JSON.parse(localStorage.getItem(DELETED_KEY) || '[]');
+    const i = arr.indexOf(id);
+    if(i > -1){ arr.splice(i, 1); localStorage.setItem(DELETED_KEY, JSON.stringify(arr)); }
+  } catch(_) {}
+}
 async function saveWithSync(){
   // 1) Build the "current" view of all projects
   const currentMap = new Map();
@@ -274,9 +285,10 @@ async function saveWithSync(){
       }
     }
   }
-  // 5) Queue deletes for projects that disappeared
+    // 5) Queue deletes for projects that disappeared
   for(const id of prev.keys()){
     if(!currentMap.has(id)){
+      markDeletedLocally(id);   // ← synchronous tombstone (survives mid-reload)
       try { await enqueueSync('project', 'delete', { id }, id); }
       catch(e){ console.warn('enqueue delete failed', e); }
     }
@@ -340,9 +352,12 @@ async function flushQueue(){
     if(!items.length) return;
     for(const item of items){
       if(!navigator.onLine) break;
-      try {
+            try {
         await applyQueueItem(item);
         await removeSyncItem(item._key);
+        if(item.entity === 'project' && item.op === 'delete' && item.projectId){
+          unmarkDeletedLocally(item.projectId);
+        }
       } catch(e){
         console.warn('[sync] item failed:', item.entity, item.op, item.projectId, e.message || e);
         break; // preserve order; retry next tick
@@ -400,7 +415,7 @@ async function pullFromSupabase(){
   const pendingIds = new Set();
   const queued = await listSyncQueue();
   queued.forEach(item => { if(item.projectId) pendingIds.add(item.projectId); });
-
+  const deletedIds = getDeletedIds();   // ← NEW
   // 2) Fetch remote
   let remote = [];
   try {
@@ -423,7 +438,13 @@ async function pullFromSupabase(){
       updatedAt: row.updated_at
     });
     const localProj = localMap.get(row.id);
-
+    // Skip projects deleted locally but not yet flushed
+    if(deletedIds.has(row.id)){
+      if(!pendingIds.has(row.id)){
+        try { await enqueueSync('project', 'delete', { id: row.id }, row.id); } catch(_){}
+      }
+      continue;
+    }
     // Skip pending-local: local write wins
     if(pendingIds.has(row.id)){
       if(localProj){ merged.push(localProj); localMap.delete(row.id); }
@@ -661,7 +682,7 @@ async function seedUsers(){}
 function cleanupLegacyAuth(){
   try{
     ['edu_session_v1','edu_session_v2','edu_session_v3',
-     'edu_session_v4','edu_session_v5','edu_session_v6','edu_session_v7','edu_session_v8','edu_session_v9'].forEach(k => {
+     'edu_session_v4','edu_session_v5','edu_session_v6','edu_session_v7','edu_session_v8','edu_session_v9','edu_session_v10','edu_session_v11','edu_session_v12','edu_session_v13','edu_session_v14','edu_session_v15','edu_session_v16','edu_session_v17'].forEach(k => {
       if(localStorage.getItem(k)) localStorage.removeItem(k);
     });
   }catch(_){}

@@ -333,12 +333,20 @@ function startApp(){
   const stored = load();
   projects = stored || seed();
   render();
-  startSyncLoop();
+    startSyncLoop();
   (async () => {
-    await pullFromSupabase();
-    await seedUnpushedProjects();
-    await flushQueue();
-  })().catch(() => {});
+    try {
+      await flushQueue();           // 1. push pending writes (incl. deletes) FIRST
+      await pullFromSupabase();     // 2. pull remote (tombstones respected)
+      await seedUnpushedProjects(); // 3. push local-only projects
+      await flushQueue();           // 4. push them
+      console.log('[boot sync] done. projects=', projects.length,
+                  'queue=', await countSyncQueue(),
+                  'tombstones=', getDeletedIds().size);
+    } catch(e) {
+      console.warn('[boot sync] error:', e);
+    }
+  })();
 }
 
 /* $$('.auth-tab').forEach(btn => {
