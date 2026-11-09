@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v16_ar';
-const USERS_KEY = 'edu_users_v16';
-const SESSION_KEY = 'edu_session_v16';
+const STORE_KEY = 'edu_projects_v17_ar';
+const USERS_KEY = 'edu_users_v17';
+const SESSION_KEY = 'edu_session_v17';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -527,7 +527,7 @@ function seed(){
       role:'محللة نظم', email:'s.nabil@ministry.gov', phone:'+212 611 220 480',
       status:'completed', priority:'medium', startDate: shiftISO(-120), endDate: shiftISO(-20),
       progress:100, notes:'تم التسليم وتحويله إلى فريق التشغيل.' }
-  ].map(p => ({ id: uid(), ...p, visits: [], createdAt: now, updatedAt: now }));
+    ].map((p, i) => ({ id: 'p_seed_' + (i + 1), ...p, visits: [], createdAt: now, updatedAt: now }));
 }
 
 /* ===================== معالجة الصور والختم ===================== */
