@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v21_ar';
-const USERS_KEY = 'edu_users_v21';
-const SESSION_KEY = 'edu_session_v21';
+const STORE_KEY = 'edu_projects_v22_ar';
+const USERS_KEY = 'edu_users_v22';
+const SESSION_KEY = 'edu_session_v22';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -729,7 +729,22 @@ function cleanupLegacyAuth(){
     });
   }catch(_){}
 }
-
+async function callAdminUsers(body){
+  const { data, error } = await window.sb.functions.invoke('admin-users', { body });
+  if(error){
+    let msg = error.message || 'Edge Function error';
+    try {
+      const resp = error.context;
+      if(resp && typeof resp.json === 'function'){
+        const j = await resp.json();
+        if(j && j.error) msg = j.error;
+      }
+    } catch(_){}
+    throw new Error(msg);
+  }
+  if(data && data.error) throw new Error(data.error);
+  return data;
+}
 async function bootAuth(){
   cleanupLegacyAuth();
   // Wait up to 3s for window.sb (module scripts are deferred)

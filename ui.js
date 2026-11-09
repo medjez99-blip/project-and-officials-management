@@ -1055,14 +1055,21 @@ if(btnUsersEl){
 
 const usersListEl = $('#usersList');
 if(usersListEl){
-  usersListEl.addEventListener('change', e => {
+    usersListEl.addEventListener('change', async e => {
     const sel = e.target.closest('select[data-role-for]');
     if(!sel) return;
     if(!isAdmin()){ toast('متاح لمدير النظام فقط','bad'); renderUsersModal(); return; }
     const u = users.find(x => x.id === sel.dataset.roleFor);
     if(!u || (currentUser && u.id === currentUser.id)) return;
-    u.role = sel.value === 'admin' ? 'admin' : 'user';
-    saveUsers();
+    const newRole = sel.value === 'admin' ? 'admin' : 'user';
+    try{
+      await callAdminUsers({ action: 'change-role', userId: u.id, role: newRole });
+    }catch(err2){
+      toast('تعذّر تحديث الصلاحية: ' + err2.message, 'bad');
+      renderUsersModal();
+      return;
+    }
+    u.role = newRole;
     toast('تم تحديث صلاحية ' + u.name, 'ok');
   });
 
@@ -1087,10 +1094,15 @@ if(usersListEl){
     okText: 'حذف',
     danger: true
   });
-  if(!ok) return;
+    if(!ok) return;
 
+  try{
+    await callAdminUsers({ action: 'delete-user', userId: u.id });
+  }catch(err2){
+    toast('تعذّر حذف المستخدم: ' + err2.message, 'bad');
+    return;
+  }
   users = users.filter(x => x.id !== u.id);
-  saveUsers();
   renderUsersModal();
   toast('تم حذف المستخدم', 'bad');
 });
@@ -1143,9 +1155,10 @@ if(newUserFormEl){
     const btn = $('#btnSaveNewUser');
     const old = btn.textContent;
     btn.disabled = true; btn.textContent = 'جارٍ الإنشاء…';
-    try{
-      await createUser({ name, email, password, role });
+        try{
+      await callAdminUsers({ action: 'create', name, email, password, role });
       $('#newUserForm').classList.add('hidden');
+      users = await sbFetchAllProfiles();
       renderUsersModal();
       toast('تم إنشاء المستخدم', 'ok');
     }catch(err2){
@@ -1206,15 +1219,11 @@ async function savePw(){
   const old = btn.textContent;
   btn.disabled = true; btn.textContent = 'جارٍ الحفظ…';
   try{
-    const salt = randomSalt();
-    const hash = await hashPw(pw, salt);
-    u.salt = salt;
-    u.hash = hash;
-    saveUsers();
+    await callAdminUsers({ action: 'reset-password', userId: u.id, password: pw });
     closePwModal();
     toast('تم تحديث كلمة المرور', 'ok');
-  }catch(_){
-    err.textContent = 'تعذّر تحديث كلمة المرور.';
+  }catch(e){
+    err.textContent = e.message || 'تعذّر تحديث كلمة المرور.';
     err.classList.add('show');
   }finally{
     btn.disabled = false; btn.textContent = old;
