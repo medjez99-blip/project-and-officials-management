@@ -333,9 +333,12 @@ function startApp(){
   const stored = load();
   projects = stored || seed();
   render();
-
   startSyncLoop();
-  seedUnpushedProjects().then(() => flushQueue()).catch(() => {});
+  (async () => {
+    await pullFromSupabase();
+    await seedUnpushedProjects();
+    await flushQueue();
+  })().catch(() => {});
 }
 
 /* $$('.auth-tab').forEach(btn => {

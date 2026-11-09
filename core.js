@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v15_ar';
-const USERS_KEY = 'edu_users_v15';
-const SESSION_KEY = 'edu_session_v15';
+const STORE_KEY = 'edu_projects_v16_ar';
+const USERS_KEY = 'edu_users_v16';
+const SESSION_KEY = 'edu_session_v16';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -373,14 +373,98 @@ async function seedUnpushedProjects(){
     console.warn('[sync] seed failed:', e.message || e);
   }
 }
-
 function startSyncLoop(){
   if(_syncLoopStarted) return;
   _syncLoopStarted = true;
   _flushTimer = setInterval(() => { flushQueue(); }, 30000);
   window.addEventListener('online',  () => { updateSyncBadge(); flushQueue(); });
   window.addEventListener('offline', () => { updateSyncBadge(); });
+
+  let _focusTimer = null;
+  window.addEventListener('focus', () => {
+    clearTimeout(_focusTimer);
+    _focusTimer = setTimeout(async () => {
+      await flushQueue();
+      await pullFromSupabase();
+    }, 500);
+  });
+
   updateSyncBadge();
+}
+/* ===================== Sync: pull from Supabase (Phase 4d+4e) ===================== */
+async function pullFromSupabase(){
+  if(!window.sb || !currentUser) return;
+  if(!navigator.onLine) return;
+
+  // 1) Which project IDs have pending writes? Never overwrite those.
+  const pendingIds = new Set();
+  const queued = await listSyncQueue();
+  queued.forEach(item => { if(item.projectId) pendingIds.add(item.projectId); });
+
+  // 2) Fetch remote
+  let remote = [];
+  try {
+    const { data, error } = await window.sb.from('projects').select('*');
+    if(error) throw error;
+    remote = data || [];
+  } catch(e){
+    console.warn('[pull] failed:', e.message || e);
+    return;
+  }
+
+  // 3) Merge: LWW by updatedAt, per project ID
+  const localMap = new Map(projects.map(p => [p.id, p]));
+  const merged = [];
+  let pulled = 0, conflicts = 0;
+
+  for(const row of remote){
+    const remoteProj = Object.assign({}, row.data, {
+      id: row.id,
+      updatedAt: row.updated_at
+    });
+    const localProj = localMap.get(row.id);
+
+    // Skip pending-local: local write wins
+    if(pendingIds.has(row.id)){
+      if(localProj){ merged.push(localProj); localMap.delete(row.id); }
+      continue;
+    }
+
+    if(!localProj){
+      // New from remote
+      merged.push(remoteProj);
+      pulled++;
+    } else {
+      const localT  = localProj.updatedAt || '';
+      const remoteT = remoteProj.updatedAt || '';
+      if(remoteT > localT){
+        merged.push(remoteProj);
+        pulled++;
+        conflicts++;
+      } else {
+        merged.push(localProj);
+      }
+      localMap.delete(row.id);
+    }
+  }
+
+  // 4) Remaining local-only projects: keep them, enqueue upsert if not queued
+  let queuedOut = 0;
+  for(const [id, p] of localMap){
+    merged.push(p);
+    if(!pendingIds.has(id)){
+      try { await enqueueSync('project', 'upsert', p, id); queuedOut++; }
+      catch(e){ console.warn('[pull] enqueue failed', e); }
+    }
+  }
+
+  // 5) Commit
+  projects = merged;
+  _lastSyncSnapshot = null;   // prevent the diff engine from re-queueing everything
+  save();                     // persist to localStorage immediately
+  render();                   // redraw; saveWithSync sees _lastSyncSnapshot=null → no re-enqueue
+
+  console.log(`[pull] pulled=${pulled} conflicts=${conflicts} queuedOut=${queuedOut} total=${projects.length}`);
 }
 /* ===================== تخزين المشاريع ===================== */
 function save(){
