@@ -330,8 +330,12 @@ function startApp(){
   $('#userName').textContent = currentUser.name;
   $('#userRole').textContent = currentUser.role === 'admin' ? 'مدير النظام' : 'مستخدم';
   $('#userAvatar').textContent = (currentUser.name || '?').trim().charAt(0);
-  const stored = load();
-  projects = stored || seed();
+    const stored = load();
+  projects = stored || (isAdmin() ? seed() : []);
+  if(!isAdmin()){
+    projects = projects.filter(isOwner);   // drop projects this user doesn't own
+  }
+  _lastSyncSnapshot = null;
   render();
     startSyncLoop();
   (async () => {

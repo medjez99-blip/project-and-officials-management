@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v19_ar';
-const USERS_KEY = 'edu_users_v19';
-const SESSION_KEY = 'edu_session_v19';
+const STORE_KEY = 'edu_projects_v21_ar';
+const USERS_KEY = 'edu_users_v21';
+const SESSION_KEY = 'edu_session_v21';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -391,9 +391,18 @@ async function flushQueue(){
         if(item.entity === 'project' && item.op === 'delete' && item.projectId){
           unmarkDeletedLocally(item.projectId);
         }
-      } catch(e){
-        console.warn('[sync] item failed:', item.entity, item.op, item.projectId, e.message || e);
-        break; // preserve order; retry next tick
+            } catch(e){
+        const msg = (e && e.message) || String(e);
+        console.warn('[sync] item failed:', item.entity, item.op, item.projectId, msg);
+        const permanent = /row-level security|permission|forbidden|not found|invalid input/i.test(msg);
+        if(permanent){
+          try { await removeSyncItem(item._key); } catch(_){}
+          if(item.entity === 'project' && item.op === 'delete' && item.projectId){
+            unmarkDeletedLocally(item.projectId);
+          }
+        } else {
+          break; // transient (network) — retry next tick
+        }
       }
     }
   } finally {
@@ -715,7 +724,7 @@ async function seedUsers(){}
 function cleanupLegacyAuth(){
   try{
     ['edu_session_v1','edu_session_v2','edu_session_v3',
-     'edu_session_v4','edu_session_v5','edu_session_v6','edu_session_v7','edu_session_v8','edu_session_v9','edu_session_v10','edu_session_v11','edu_session_v12','edu_session_v13','edu_session_v14','edu_session_v15','edu_session_v16','edu_session_v17'].forEach(k => {
+     'edu_session_v4','edu_session_v5','edu_session_v6','edu_session_v7','edu_session_v8','edu_session_v9','edu_session_v10','edu_session_v11','edu_session_v12','edu_session_v13','edu_session_v14','edu_session_v15','edu_session_v16','edu_session_v17','edu_session_v18','edu_session_v19','edu_session_v20'].forEach(k => {
       if(localStorage.getItem(k)) localStorage.removeItem(k);
     });
   }catch(_){}
