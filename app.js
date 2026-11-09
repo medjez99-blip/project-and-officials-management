@@ -36,7 +36,7 @@ async function handleAction(act, id){
     render();
     toast('تم نسخ المشروع','info');
   }
-  else if(act === 'del'){
+    else if(act === 'del'){
     const ok = await confirmDialog({
       title: 'حذف المشروع',
       message: 'هل تريد حذف المشروع «' + p.name + '»؟\n\nسيتم أيضاً حذف جميع زياراته وصوره. لا يمكن التراجع.',
@@ -44,7 +44,12 @@ async function handleAction(act, id){
       danger: true
     });
     if(!ok) return;
-    deleteProjectPhotos(p).catch(()=>{});
+    for(const v of (p.visits || [])){
+      for(const photoId of (v.photoIds || [])){
+        await enqueueSync('photo', 'delete', { projectId: p.id, photoId }, p.id);
+      }
+    }
+    await deleteProjectPhotos(p);
     projects = projects.filter(x => x.id !== id);
     render();
     toast('تم حذف المشروع','bad');

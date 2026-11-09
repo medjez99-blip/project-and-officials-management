@@ -601,6 +601,20 @@ async function loadAndRenderVisits(project){
   const photosMap = allPhotoIds.length ? await getPhotosFromDB(allPhotoIds) : {};
   currentThumbs = {};
   Object.keys(photosMap).forEach(id => { currentThumbs[id] = photosMap[id].thumbDataUrl; });
+
+  const missing = allPhotoIds.filter(id => !photosMap[id]);
+  if(missing.length && navigator.onLine && window.sb){
+    for(const id of missing){
+      try{
+        const path = `${project.id}/${id}.jpg`;
+        const url = await sbSignedPhotoUrl(path, 3600);
+        if(url) currentThumbs[id] = url;
+      }catch(e){
+        console.warn('[signed-url] failed for', id, e.message || e);
+      }
+    }
+  }
+
   $('#visitsList').innerHTML = renderVisits(project, currentThumbs);
 }
 
@@ -627,7 +641,7 @@ function renderVisits(project, thumbs){
     const photos = (v.photoIds || []).map(id => {
       const t = thumbs[id];
       if(!t) return '';
-      return '<a class="photo-thumb" data-photo="' + esc(id) + '" title="عرض الصورة"><img src="' + t + '" alt=""></a>';
+            return '<a class="photo-thumb" data-photo="' + esc(id) + '" data-project="' + esc(project.id) + '" title="عرض الصورة"><img src="' + t + '" alt=""></a>';
     }).join('');
 
     const canDelete = isAdmin() || (currentUser && v.userId === currentUser.id);
@@ -656,13 +670,20 @@ function renderVisits(project, thumbs){
 $('#visitsList').addEventListener('click', async e => {
   const thumb = e.target.closest('[data-photo]');
   if(thumb){
-    const id = thumb.dataset.photo;
+        const id = thumb.dataset.photo;
+    const projectId = thumb.dataset.project;
     try{
       const photo = await getPhotoFromDB(id);
+      let url = null;
       if(photo && photo.blob){
-        const url = URL.createObjectURL(photo.blob);
+        url = URL.createObjectURL(photo.blob);
+      } else if(navigator.onLine && window.sb && projectId){
+        const path = `${projectId}/${id}.jpg`;
+        url = await sbSignedPhotoUrl(path, 3600);
+      }
+      if(url){
         const img = $('#lightboxImg');
-        if(img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+        if(img.dataset.url && img.dataset.url.startsWith('blob:')) URL.revokeObjectURL(img.dataset.url);
         img.src = url;
         img.dataset.url = url;
         const dl = $('#lightboxDownload');
@@ -670,6 +691,8 @@ $('#visitsList').addEventListener('click', async e => {
         dl.download = 'visit-' + id + '.jpg';
         $('#lightbox').classList.add('open');
         $('#lightbox').setAttribute('aria-hidden','false');
+      } else {
+        toast('الصورة غير متاحة في هذا الجهاز','bad');
       }
     }catch(err){ toast('تعذّر تحميل الصورة','bad'); }
     return;
@@ -695,6 +718,9 @@ const ok = await confirmDialog({
 });
 if(!ok) return;
 
+    for(const photoId of (v.photoIds || [])){
+    await enqueueSync('photo', 'delete', { projectId, photoId }, projectId);
+  }
   await deletePhotosFromDB(v.photoIds || []);
   p.visits = (p.visits || []).filter(x => x.id !== visitId);
   p.updatedAt = new Date().toISOString();
@@ -888,7 +914,7 @@ $('#btnSaveVisit').addEventListener('click', async () => {
   btn.textContent = 'جارٍ الحفظ…';
 
   try{
-    const photoIds = [];
+        const photoIds = [];
     for(const ph of photos){
       const id = photoUid();
       try{
@@ -903,6 +929,7 @@ $('#btnSaveVisit').addEventListener('click', async () => {
           location: visitLocation
         });
         photoIds.push(id);
+        await enqueueSync('photo', 'upsert', { projectId: p.id, photoId: id }, p.id);
       }catch(e){
         console.error('photo save failed', e);
       }

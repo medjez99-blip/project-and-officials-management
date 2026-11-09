@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v18_ar';
-const USERS_KEY = 'edu_users_v18';
-const SESSION_KEY = 'edu_session_v18';
+const STORE_KEY = 'edu_projects_v19_ar';
+const USERS_KEY = 'edu_users_v19';
+const SESSION_KEY = 'edu_session_v19';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -316,7 +316,36 @@ async function sbDeleteProject(id){
   const { error } = await window.sb.from('projects').delete().eq('id', id);
   if(error) throw error;
 }
-
+/* ===================== Storage helpers (Phase 7) ===================== */
+async function sbUploadPhotoFile(path, blob){
+  const { error } = await window.sb.storage
+    .from('visit-photos')
+    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  if(error) throw error;
+}
+async function sbDeletePhotoFile(path){
+  const { error } = await window.sb.storage
+    .from('visit-photos')
+    .remove([path]);
+  if(error && !/not found|does not exist/i.test(error.message || '')) throw error;
+}
+async function sbSignedPhotoUrl(path, ttl = 3600){
+  const { data, error } = await window.sb.storage
+    .from('visit-photos')
+    .createSignedUrl(path, ttl);
+  if(error) throw error;
+  return data.signedUrl;
+}
+async function sbUploadPhotoItem(payload){
+  const photo = await getPhotoFromDB(payload.photoId);
+  if(!photo || !photo.blob) return;
+  const path = `${payload.projectId}/${payload.photoId}.jpg`;
+  await sbUploadPhotoFile(path, photo.blob);
+}
+async function sbDeletePhotoItem(payload){
+  const path = payload.path || `${payload.projectId}/${payload.photoId}.jpg`;
+  await sbDeletePhotoFile(path);
+}
 function resolveOwnerId(project){
   if(!currentUser) return null;
   const email = (project.email || '').trim().toLowerCase();
@@ -336,6 +365,10 @@ async function applyQueueItem(item){
   if(item.entity === 'project'){
     if(item.op === 'upsert') return sbUpsertProject(item.payload);
     if(item.op === 'delete') return sbDeleteProject(item.payload.id);
+  }
+  if(item.entity === 'photo'){
+    if(item.op === 'upsert') return sbUploadPhotoItem(item.payload);
+    if(item.op === 'delete') return sbDeletePhotoItem(item.payload);
   }
   throw new Error('Unknown entity/op: ' + item.entity + '/' + item.op);
 }
