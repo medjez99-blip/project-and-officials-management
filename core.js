@@ -7,9 +7,9 @@
    ==================================================== */
 
 /* --- ثوابت --- */
-const STORE_KEY = 'edu_projects_v23_ar';
-const USERS_KEY = 'edu_users_v23';
-const SESSION_KEY = 'edu_session_v23';
+const STORE_KEY = 'edu_projects_v24_ar';
+const USERS_KEY = 'edu_users_v24';
+const SESSION_KEY = 'edu_session_v24';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -709,7 +709,7 @@ async function sbFetchAllProfiles(){
 
 /* Deprecated stubs — kept so existing UI code does not crash.
    These will be removed in Phase 10 cleanup. */
-function saveSession(){}
+/* function saveSession(){}
 function loadSession(){ return null; }
 function clearSession(){}
 function randomSalt(){ return ''; }
@@ -719,16 +719,16 @@ function saveUsers(){}
 function findUserByEmail(){ return null; }
 async function createUser(){ throw new Error('إنشاء المستخدمين سيُفعَّل في مرحلة لاحقة.'); }
 async function verifyUser(){ return null; }
-async function seedUsers(){}
+async function seedUsers(){} */
 
-function cleanupLegacyAuth(){
+/* function cleanupLegacyAuth(){
   try{
     ['edu_session_v1','edu_session_v2','edu_session_v3',
      'edu_session_v4','edu_session_v5','edu_session_v6','edu_session_v7','edu_session_v8','edu_session_v9','edu_session_v10','edu_session_v11','edu_session_v12','edu_session_v13','edu_session_v14','edu_session_v15','edu_session_v16','edu_session_v17','edu_session_v18','edu_session_v19','edu_session_v20'].forEach(k => {
       if(localStorage.getItem(k)) localStorage.removeItem(k);
     });
   }catch(_){}
-}
+} */
 async function callAdminUsers(body){
   const { data, error } = await window.sb.functions.invoke('admin-users', { body });
   if(error){
@@ -746,7 +746,16 @@ async function callAdminUsers(body){
   return data;
 }
 async function bootAuth(){
-  cleanupLegacyAuth();
+  // One-time cleanup of legacy localStorage keys from pre-Supabase versions
+  try{
+    ['edu_session_v1','edu_session_v2','edu_session_v3',
+     'edu_session_v4','edu_session_v5','edu_session_v6',
+     'edu_session_v7','edu_session_v8','edu_session_v9',
+     'edu_users_v8','edu_users_v18'].forEach(k => {
+      if(localStorage.getItem(k)) localStorage.removeItem(k);
+    });
+  }catch(_){}
+
   // Wait up to 3s for window.sb (module scripts are deferred)
   for(let i = 0; i < 30 && !window.sb; i++){
     await new Promise(r => setTimeout(r, 100));
