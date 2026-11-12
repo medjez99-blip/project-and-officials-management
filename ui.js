@@ -217,7 +217,7 @@ function renderTable(){
 		const m = isAdmin()
 		? { title:'لا توجد مشاريع بعد', text:'اضغط على «مشروع جديد» لإضافة أول مشروع.' }
 		: { title:'لا توجد مشاريع مسندة إليك', text:'سيظهر هنا أي مشروع يتم تعيينك مسؤولاً عنه.' };
-		tbody.innerHTML = '<tr><td colspan="9" class="empty">' +
+		tbody.innerHTML = '<tr><td colspan="12" class="empty">' +
 		'<div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>' +
 		'<div class="empty-title">' + esc(m.title) + '</div>' +
 		'<div class="empty-text">' + esc(m.text) + '</div>' +
@@ -226,7 +226,7 @@ function renderTable(){
 	}
 	
 	if(!list.length){
-		tbody.innerHTML = '<tr><td colspan="9" class="empty">' +
+		tbody.innerHTML = '<tr><td colspan="12" class="empty">' +
 		'<div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>' +
 		'<div class="empty-title">لا نتائج مطابقة</div>' +
 		'<div class="empty-text">جرّب تغيير كلمات البحث أو الفلاتر.</div>' +
@@ -248,7 +248,17 @@ function renderTable(){
         CAMERA_ICON +
         (visitCount ? '<span class="badge-count">' + visitCount + '</span>' : '') +
 		'</button>';
-		
+		const delegation = p.delegation || '—';
+const itLabel = p.interventionType === 'other'
+	? 'أخرى'
+	: (INTERVENTION_AR[p.interventionType] || '—');
+const itSub = p.interventionType === 'other' && p.interventionTypeOther
+	? p.interventionTypeOther.slice(0, 40) : '';
+const fundLabel = p.funding === 'other'
+	? 'أخرى'
+	: (FUNDING_AR[p.funding] || '—');
+const fundSub = p.funding === 'other' && p.fundingOther
+	? p.fundingOther.slice(0, 40) : '';
 		const actions = isAdmin()
 		? visitsBtn +
         '<button class="icon-btn" data-act="edit" data-id="' + p.id + '" title="تعديل">' +
@@ -274,6 +284,20 @@ function renderTable(){
         '<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div></td>' +
 		'<td><div style="font-weight:600">' + esc(p.responsible || '—') + '</div>' +
         '<div class="cell-sub">' + esc([p.role, p.phone].filter(Boolean).join(' · ') || '—') + '</div></td>' +
+		
+
+	'<td>' + esc(delegation) + '</td>' +
+
+	'<td><div>' + esc(p.entityName || '—') + '</div>' +
+	'<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div></td>' +
+
+	'<td><div>' + esc(itLabel) + '</div>' +
+	(itSub ? '<div class="cell-sub">' + esc(itSub) + '</div>' : '') + '</td>' +
+
+	'<td>... responsible (unchanged) ...</td>' +
+
+	'<td><div>' + esc(fundLabel) + '</div>' +
+	(fundSub ? '<div class="cell-sub">' + esc(fundSub) + '</div>' : '') + '</td>' +
 		'<td><span class="badge ' + esc(p.status) + '">' + esc(STATUS_AR[p.status] || p.status) + '</span></td>' +
 		'<td><span class="badge ' + esc(p.priority) + '">' + esc(PRIORITY_AR[p.priority] || p.priority) + '</span></td>' +
 		'<td>' + period + '</td>' +
@@ -439,6 +463,15 @@ function openModal(p){
 	$('#pCode').value = d.code || '';
 	$('#pEntityType').value = d.entityType || 'School';
 	$('#pEntityName').value = d.entityName || '';
+	$('#pDelegation').value = d.delegation || '';
+
+$$('input[name="pInterventionType"]').forEach(r => { r.checked = (r.value === d.interventionType); });
+$('#pInterventionTypeOther').value = d.interventionTypeOther || '';
+$('#pInterventionTypeOther').classList.toggle('hidden', d.interventionType !== 'other');
+
+$$('input[name="pFunding"]').forEach(r => { r.checked = (r.value === d.funding); });
+$('#pFundingOther').value = d.fundingOther || '';
+$('#pFundingOther').classList.toggle('hidden', d.funding !== 'other');
 	$('#pResponsible').value = d.responsible || '';
 	$('#pRole').value = d.role || '';
 	$('#pEmail').value = d.email || '';
@@ -462,11 +495,20 @@ function closeModal(){
 	editingId = null;
 }
 function readForm(){
+	const itRadio = $$('input[name="pInterventionType"]').find(r => r.checked);
+	const fRadio  = $$('input[name="pFunding"]').find(r => r.checked);
+	const itVal   = itRadio ? itRadio.value : '';
+	const fVal    = fRadio  ? fRadio.value  : '';
 	return {
 		name: $('#pName').value.trim(),
 		code: $('#pCode').value.trim(),
 		entityType: $('#pEntityType').value,
 		entityName: $('#pEntityName').value.trim(),
+		delegation: $('#pDelegation').value.trim(),
+		interventionType: itVal,
+		interventionTypeOther: itVal === 'other' ? $('#pInterventionTypeOther').value.trim() : '',
+		funding: fVal,
+		fundingOther: fVal === 'other' ? $('#pFundingOther').value.trim() : '',
 		responsible: $('#pResponsible').value.trim(),
 		role: $('#pRole').value.trim(),
 		email: $('#pEmail').value.trim(),
@@ -512,6 +554,16 @@ $('#projectForm').addEventListener('submit', e => {
 $('#pProgress').addEventListener('input', e => {
 	$('#pProgressVal').textContent = e.target.value + '%';
 });
+$$('input[name="pInterventionType"]').forEach(r => r.addEventListener('change', () => {
+	const other = r.value === 'other';
+	$('#pInterventionTypeOther').classList.toggle('hidden', !other);
+	if(other) setTimeout(() => $('#pInterventionTypeOther').focus(), 40);
+}));
+$$('input[name="pFunding"]').forEach(r => r.addEventListener('change', () => {
+	const other = r.value === 'other';
+	$('#pFundingOther').classList.toggle('hidden', !other);
+	if(other) setTimeout(() => $('#pFundingOther').focus(), 40);
+}));
 $('#pResponsible').addEventListener('input', e => {
 	const name = e.target.value.trim().toLowerCase();
 	const u = users.find(x => x.name.trim().toLowerCase() === name);

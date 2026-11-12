@@ -281,7 +281,7 @@ select.filter:focus{border-color:var(--primary-2);background-color:#fff;box-shad
 
 /* ===================== Table ===================== */
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:1180px}
+table{width:100%;border-collapse:collapse;min-width:1500px}
 thead th{
   text-align:right;font-size:11.5px;letter-spacing:.3px;color:var(--muted);font-weight:700;
   text-transform:uppercase;padding:12px 18px;background:#F8FAFC;border-bottom:1px solid var(--line);
@@ -723,6 +723,26 @@ tbody tr:hover{background:#FAFBFD}
   font-size:12px;font-weight:700;color:var(--ink-2);
   /* match .field label */
 }
+/* ===================== Radio group ===================== */
+.radio-group{
+	display:flex;flex-wrap:wrap;gap:8px;padding:2px 0;
+}
+.radio-item{
+	display:inline-flex;align-items:center;gap:7px;
+	padding:8px 13px;background:#F8FAFC;
+	border:1px solid var(--line);border-radius:9px;
+	font-size:13px;font-weight:600;color:var(--ink-2);
+	cursor:pointer;user-select:none;transition:all .15s;
+}
+.radio-item:hover{background:#fff;border-color:#C9D3E2}
+.radio-item input[type="radio"]{
+	margin:0;accent-color:var(--primary-2);cursor:pointer;
+}
+.radio-item:has(input:checked){
+	background:#EFF6FC;border-color:var(--primary-2);color:var(--primary-2);
+}
+.radio-item:has(input:checked) input{accent-color:var(--primary-2)}
+.field .radio-group + textarea{margin-top:10px}
 /* Compact topbar button on small screens */
 @media(max-width:480px){
   #btnInstall{padding:8px 10px;font-size:0}   /* text hidden, icon only */

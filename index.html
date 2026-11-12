@@ -239,8 +239,11 @@
 						<thead>
 							<tr>
 								<th>المشروع</th>
-								<th>المدرسة / المكتب</th>
-								<th>المسؤول</th>
+<th>المعتمدية</th>
+								<th>المؤسسة</th>
+<th>المسؤول</th>
+<th>نوعية التدخل</th>
+<th>التمويل</th>
 								<th>الحالة</th>
 								<th>الأولوية</th>
 								<th>الفترة</th>
@@ -276,6 +279,10 @@
 								<label for="pCode">رمز المشروع / المرجع</label>
 								<input type="text" id="pCode" placeholder="EDU-2026-014" maxlength="40">
 							</div>
+<div class="field">
+	<label for="pDelegation">المعتمدية</label>
+	<input type="text" id="pDelegation" placeholder="مثال: باجة الشمالية" maxlength="80">
+</div>
 							<div class="field">
 								<label for="pEntityType">نوع الوحدة</label>
 								<select id="pEntityType">
@@ -286,9 +293,33 @@
 								</select>
 							</div>
 							<div class="field full">
-								<label for="pEntityName">اسم المدرسة / المكتب</label>
+								<label for="pEntityName">المؤسسة</label>
 								<input type="text" id="pEntityName" placeholder="مثال: ثانوية النور" maxlength="120">
 							</div>
+							<div class="field full">
+	<label>نوعية التدخل</label>
+	<div class="radio-group">
+		<label class="radio-item"><input type="radio" name="pInterventionType" value="expansion"><span>توسيعات</span></label>
+		<label class="radio-item"><input type="radio" name="pInterventionType" value="maintenance"><span>صيانة</span></label>
+		<label class="radio-item"><input type="radio" name="pInterventionType" value="construction"><span>احداث</span></label>
+		<label class="radio-item"><input type="radio" name="pInterventionType" value="other"><span>أخرى</span></label>
+	</div>
+	<textarea id="pInterventionTypeOther" class="hidden" placeholder="يرجى تحديد نوع التدخل الآخر…" maxlength="200"></textarea>
+</div>
+
+<div class="field full">
+	<label>التمويل</label>
+	<div class="radio-group">
+		<label class="radio-item"><input type="radio" name="pFunding" value="general_resources"><span>موارد عامة</span></label>
+		<label class="radio-item"><input type="radio" name="pFunding" value="FADES"><span>FADES</span></label>
+		<label class="radio-item"><input type="radio" name="pFunding" value="BAD"><span>BAD</span></label>
+		<label class="radio-item"><input type="radio" name="pFunding" value="AMI"><span>AMI</span></label>
+		<label class="radio-item"><input type="radio" name="pFunding" value="BEI"><span>BEI</span></label>
+		<label class="radio-item"><input type="radio" name="pFunding" value="civil_society"><span>مجتمع مدني</span></label>
+		<label class="radio-item"><input type="radio" name="pFunding" value="other"><span>أخرى</span></label>
+	</div>
+	<textarea id="pFundingOther" class="hidden" placeholder="يرجى تحديد مصدر التمويل الآخر…" maxlength="200"></textarea>
+</div>
 							<div class="field" id="wrapResp">
 								<label for="pResponsible">المسؤول <span class="req">*</span></label>
 								<input type="text" id="pResponsible" list="usersDatalist" placeholder="الاسم الكامل" maxlength="100" autocomplete="off">

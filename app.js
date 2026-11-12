@@ -103,7 +103,14 @@ $('#btnJson').addEventListener('click', () => {
 $('#btnCsv').addEventListener('click', () => {
   if(!isAdmin()) return;
   if(!projects.length) return toast('لا توجد مشاريع للتصدير','bad');
-  const cols = ['name','code','entityType','entityName','responsible','role','email','phone','status','priority','startDate','endDate','progress','notes'];
+  const cols = [
+	'name','code',
+	'delegation','entityType','entityName',
+	'interventionType','interventionTypeOther',
+	'funding','fundingOther',
+	'responsible','role','email','phone',
+	'status','priority','startDate','endDate','progress','notes'
+];
   const head = cols.join(',');
   const rows = projects.map(p => cols.map(c => {
     const v = p[c] == null ? '' : String(p[c]);

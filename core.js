@@ -12,9 +12,9 @@
 	load — including unsynced edits. Change only with an
 	intentional migration plan.
 ============================================================ */
-const STORE_KEY = 'edu_projects_v25_ar';
-const USERS_KEY = 'edu_users_v25';
-const SESSION_KEY = 'edu_session_v25';
+const STORE_KEY = 'edu_projects_v24_ar';
+const USERS_KEY = 'edu_users_v24';
+const SESSION_KEY = 'edu_session_v24';
 const SESSION_DAYS = 30;
 const DAY = 86400000;
 const MAX_PHOTOS_PER_VISIT = 10;
@@ -39,7 +39,21 @@ const STATUS_AR = {planned:'مخطط',active:'نشط',onhold:'معلّق',comple
 const PRIORITY_AR = {critical:'حرج',high:'عالي',medium:'متوسط',low:'منخفض'};
 const ENTITY_AR = {School:'مدرسة',Office:'مكتب',Directorate:'مديرية',Other:'أخرى'};
 const MONTHS_AR = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-
+const INTERVENTION_AR = {
+	expansion:    'توسيعات',
+	maintenance:  'صيانة',
+	construction: 'احداث',
+	other:        'أخرى'
+};
+const FUNDING_AR = {
+	general_resources: 'موارد عامة',
+	FADES:             'FADES',
+	BAD:               'BAD',
+	AMI:               'AMI',
+	BEI:               'BEI',
+	civil_society:     'مجتمع مدني',
+	other:             'أخرى'
+};
 const isClosed = p => p.status === 'completed' || p.status === 'cancelled';
 const prioRank = pr => ({critical:0,high:1,medium:2,low:3}[pr] ?? 9);
 const pad2 = n => String(n).padStart(2,'0');
@@ -270,16 +284,16 @@ async function saveWithSync(){
 	for(const p of projects){
 		currentMap.set(p.id, JSON.stringify(p));
 	}
-	
+
 	// 2) Snapshot FIRST so re-entrant renders don't double-queue
 	const prev = _lastSyncSnapshot;
 	_lastSyncSnapshot = currentMap;
-	
+
 	// 3) Persist to localStorage immediately — never lose data if enqueue fails
 	save();
-	
+
 	if(!prev) return; // very first call after boot: nothing to diff against
-	
+
 	// 4) Queue upserts for new or changed projects
 	for(const [id, json] of currentMap){
 		if(prev.get(id) !== json){
@@ -441,7 +455,7 @@ function startSyncLoop(){
 	_flushTimer = setInterval(() => { flushQueue(); }, 30000);
 	window.addEventListener('online',  () => { updateSyncBadge(); flushQueue(); });
 	window.addEventListener('offline', () => { updateSyncBadge(); });
-	
+
 	let _focusTimer = null;
 	window.addEventListener('focus', () => {
 		clearTimeout(_focusTimer);
@@ -450,14 +464,14 @@ function startSyncLoop(){
 			await pullFromSupabase();
 		}, 500);
 	});
-	
+
 	updateSyncBadge();
 }
 /* ===================== Sync: pull from Supabase (Phase 4d+4e) ===================== */
 async function pullFromSupabase(){
 	if(!window.sb || !currentUser) return;
 	if(!navigator.onLine) return;
-	
+
 	// 1) Which project IDs have pending writes? Never overwrite those.
 	const pendingIds = new Set();
 	const queued = await listSyncQueue();
@@ -473,12 +487,12 @@ async function pullFromSupabase(){
 		console.warn('[pull] failed:', e.message || e);
 		return;
 	}
-	
+
 	// 3) Merge: LWW by updatedAt, per project ID
 	const localMap = new Map(projects.map(p => [p.id, p]));
 	const merged = [];
 	let pulled = 0, conflicts = 0;
-	
+
 	for(const row of remote){
 		const remoteProj = Object.assign({}, row.data, {
 			id: row.id,
@@ -497,7 +511,7 @@ async function pullFromSupabase(){
 			if(localProj){ merged.push(localProj); localMap.delete(row.id); }
 			continue;
 		}
-		
+
 		if(!localProj){
 			// New from remote
 			merged.push(remoteProj);
@@ -515,7 +529,7 @@ async function pullFromSupabase(){
 			localMap.delete(row.id);
 		}
 	}
-	
+
 	// 4) Remaining local-only projects: keep them, enqueue upsert if not queued
 	let queuedOut = 0;
 	for(const [id, p] of localMap){
@@ -525,13 +539,13 @@ async function pullFromSupabase(){
 			catch(e){ console.warn('[pull] enqueue failed', e); }
 		}
 	}
-	
+
 	// 5) Commit
 	projects = merged;
 	_lastSyncSnapshot = null;   // prevent the diff engine from re-queueing everything
 	save();                     // persist to localStorage immediately
 	render();                   // redraw; saveWithSync sees _lastSyncSnapshot=null → no re-enqueue
-	
+
 	console.log(`[pull] pulled=${pulled} conflicts=${conflicts} queuedOut=${queuedOut} total=${projects.length}`);
 }
 /* ===================== تخزين المشاريع ===================== */
@@ -556,6 +570,9 @@ function load(){
 function blank(){
 	return {
 		name:'', code:'', entityType:'School', entityName:'',
+		delegation:'',
+		interventionType:'', interventionTypeOther:'',
+		funding:'', fundingOther:'',
 		responsible:'', role:'', email:'', phone:'',
 		status:'planned', priority:'medium',
 		startDate:'', endDate:'', progress:0, notes:'',
@@ -620,22 +637,22 @@ function drawStamp(ctx, w, h, meta){
     : '📍 الموقع غير متاح';
 	const whoStr = `👤 ${meta.userName}${meta.projectName ? ' · ' + meta.projectName : ''}`;
 	const lines = [dateStr, locStr, whoStr];
-	
+
 	const fontSize = Math.max(11, Math.round(w / 55));
 	const padding = Math.round(fontSize * 0.95);
 	const lineHeight = Math.round(fontSize * 1.5);
 	const boxHeight = padding * 2 + lineHeight * lines.length;
 	const boxY = h - boxHeight;
-	
+
 	ctx.fillStyle = 'rgba(8, 20, 35, 0.74)';
 	ctx.fillRect(0, boxY, w, boxHeight);
 	ctx.fillStyle = '#E8B84B';
 	ctx.fillRect(0, boxY, w, 3);
-	
+
 	ctx.textBaseline = 'top';
 	ctx.textAlign = 'right';
 	if('direction' in ctx) ctx.direction = 'rtl';
-	
+
 	lines.forEach((line, i) => {
 		ctx.font = `${i === 0 ? 'bold ' : ''}${fontSize}px Tajawal, Arial, sans-serif`;
 		ctx.fillStyle = i === 0 ? '#ffffff' : 'rgba(255,255,255,0.88)';
@@ -649,15 +666,15 @@ async function processPhoto(file, meta){
 	const scale = Math.min(1, MAX / Math.max(w, h));
 	w = Math.max(1, Math.round(w * scale));
 	h = Math.max(1, Math.round(h * scale));
-	
+
 	const canvas = document.createElement('canvas');
 	canvas.width = w; canvas.height = h;
 	const ctx = canvas.getContext('2d');
 	ctx.drawImage(img, 0, 0, w, h);
 	drawStamp(ctx, w, h, meta);
-	
+
 	const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.78));
-	
+
 	const TMAX = 220;
 	const tscale = Math.min(1, TMAX / Math.max(w, h));
 	const tw = Math.max(1, Math.round(w * tscale));
@@ -666,7 +683,7 @@ async function processPhoto(file, meta){
 	tcanvas.width = tw; tcanvas.height = th;
 	tcanvas.getContext('2d').drawImage(canvas, 0, 0, tw, th);
 	const thumbDataUrl = tcanvas.toDataURL('image/jpeg', 0.65);
-	
+
 	return { blob, thumbDataUrl, width: w, height: h };
 }
 /* ===================== المصادقة — Supabase (Phase 2) ===================== */
@@ -760,7 +777,7 @@ async function bootAuth(){
 				if(localStorage.getItem(k)) localStorage.removeItem(k);
 			});
 	}catch(_){}
-	
+
 	// Wait up to 3s for window.sb (module scripts are deferred)
 	for(let i = 0; i < 30 && !window.sb; i++){
 		await new Promise(r => setTimeout(r, 100));

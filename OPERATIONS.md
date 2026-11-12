@@ -23,7 +23,7 @@
 **بدء سريع لأول مرة:**
 1. أنشئ مشروع Supabase.
 2. نفّذ SQL (§2.3) ثم SQL التخزين (§2.4).
-3. اضبط Auth (§2.5)، انشر Edge Function (§2.6)، أنشئ أول مسؤول متابعة المشاريع (§2.7).
+3. اضبط Auth (§2.5)، انشر Edge Function (§2.6)، أنشئ أول مسؤول متابعة مشاريع (§2.7).
 4. الصق URL + anon key في `config.js` (§2.8).
 5. ارفع إلى Netlify (§2.9). سجّل الدخول.
 
@@ -280,7 +280,7 @@ using (bucket_id = 'visit-photos' and public.user_can_access_project_path(name))
 
 **Authentication → Settings:**
 - **Allow new users to sign up** → **OFF** (لا تسجيل عام).
-- **Confirm email** → **OFF** (المدير يُنشئ المستخدمين بـ `email_confirm: true`).
+- **Confirm email** → **OFF** (مسؤول متابعة المشاريع يُنشئ التقنيين بـ `email_confirm: true`).
 
 **Site URL** (تحت Authentication → URL Configuration):
 - `https://project-and-officials-management.netlify.app`
@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
 
 > **لا تضع** `service_role` في أي ملف يُنزَّل للمتصفح. Supabase تُمرّرها تلقائياً كمتغيّر بيئة داخل الدالة فقط.
 
-### 2.7 إنشاء أول تقني admin
+### 2.7 إنشاء أول مسؤول متابعة مشاريع (admin)
 
 **Authentication → Users → Add user → Create new user:**
 - Email: `you@yourdomain.com`
@@ -402,10 +402,10 @@ Deno.serve(async (req) => {
 
 ```sql
 insert into public.profiles (id, name, email, role) values
-  ('PASTE_UUID_HERE', 'المدير', 'you@yourdomain.com', 'admin');
+  ('PASTE_UUID_HERE', 'مسؤول متابعة المشاريع', 'you@yourdomain.com', 'admin');
 ```
 
-هذا هو **الوحيد** الذي يجب إدخاله يدوياً — البقية يُنشئها المدير من واجهة المستخدمين.
+هذا هو **الوحيد** الذي يجب إدخاله يدوياً — البقية يُنشئها مسؤول متابعة المشاريع من واجهة التقنيين.
 
 ### 2.8 ربط التطبيق
 
@@ -427,40 +427,40 @@ window.APP_CONFIG = {
 3. Build command: (فارغ) — Publish directory: `.`.
 4. Deploy.
 
-بعد النشر: افتح الموقع → Ctrl+Shift+R → سجّل الدخول بمستخدم المدير.
+بعد النشر: افتح الموقع → Ctrl+Shift+R → سجّل الدخول بحساب مسؤول متابعة المشاريع.
 
 ---
 
 ## 3. العمليات اليومية
 
 ### 3.1 إنشاء تقني
-1. سجّل الدخول كمدير.
+1. سجّل الدخول كمسؤول متابعة المشاريع.
 2. **التقنيون** → **تقني جديد**.
 3. أدخل الاسم، البريد، كلمة المرور (6+ أحرف)، الصلاحية.
-4. **إنشاء المستخدم**.
+4. **إنشاء التقني**.
 
 خلف الكواليس: `callAdminUsers({ action: 'create', ... })` → Edge Function → `auth.admin.createUser` → trigger ينشئ صف `profiles` تلقائياً.
 
 ### 3.2 إعادة تعيين كلمة مرور
-**التقنيون** → أيقونة المفتاح بجانب المستخدم → أدخل كلمة المرور الجديدة مرتين → **حفظ**.
+**التقنيون** → أيقونة المفتاح بجانب التقني → أدخل كلمة المرور الجديدة مرتين → **حفظ**.
 
 ### 3.3 تغيير الصلاحية
-**التقنيون** → القائمة المنسدلة بجانب المستخدم → مسؤول متابعة المشاريع / تقني.
+**التقنيون** → القائمة المنسدلة بجانب التقني → مسؤول متابعة المشاريع / تقني.
 
-المستخدم يلاحظ التغيير في المرة القادمة التي يسجّل فيها الدخول (الدور يُقرأ عند sign-in).
+صاحب الحساب يلاحظ التغيير في المرة القادمة التي يسجّل فيها الدخول (الدور يُقرأ عند sign-in).
 
 ### 3.4 حذف تقني
 **التقنيون** → أيقونة سلة المهملات → تأكيد.
 
-تحذير: مشاريعه تبقى في قاعدة البيانات لكن `owner_id` يصبح بلا تقني (orphan). لا يوجد حذف تلقائي.
+تحذير: مشاريعه تبقى في قاعدة البيانات لكن `owner_id` يصبح بلا مالك (orphan). لا يوجد حذف تلقائي.
 
-### 3.5 استعادة كلمة مرور مسؤول متابعة المشاريع مفقودة
+### 3.5 استعادة كلمة مرور مسؤول متابعة مشاريع مفقودة
 
 **الطريقة 1 — عبر Supabase Dashboard:**
-1. **Authentication → Users** → اختر حساب المدير.
+1. **Authentication → Users** → اختر حساب مسؤول متابعة المشاريع.
 2. من قائمة النقاط الثلاث → **Send password recovery** أو **Reset password**.
 
-**الطريقة 2 — من Console كمدير آخر موجود:**
+**الطريقة 2 — من Console كمسؤول متابعة مشاريع آخر موجود:**
 
 ```javascript
 await callAdminUsers({
@@ -506,14 +506,14 @@ await callAdminUsers({
 
 **Triggers:**
 - `projects_set_updated_at` — يحدّث `updated_at` عند كل UPDATE.
-- `profiles_prevent_role_change` — يمنع غير المدير من تعديل `role`.
+- `profiles_prevent_role_change` — يمنع غير مسؤول متابعة المشاريع من تعديل `role`.
 - `on_auth_user_created` — ينشئ صف `profiles` تلقائياً عند إنشاء `auth.users` جديد.
 
 ### 4.2 Storage
 - Bucket: `visit-photos` — **private**.
 - المسار: `{projectId}/{photoId}.jpg`
 - الحد الأقصى: 15 MB لكل ملف.
-- العرض للمستخدمين: عبر `createSignedUrl(path, 3600)` — صلاحية ساعة.
+- العرض للتقنيين: عبر `createSignedUrl(path, 3600)` — صلاحية ساعة.
 - سياسات RLS على `storage.objects` تستخدم `public.user_can_access_project_path(name)`.
 
 ### 4.3 Edge Function `admin-users`
@@ -531,9 +531,9 @@ await callAdminUsers({
 **localStorage:**
 | المفتاح | المحتوى | **قاعدة ذهبية** |
 |---|---|---|
-| `edu_projects_v25_ar` | كل المشاريع (JSON array) | **لا تغيّر هذا الاسم أبداً** |
-| `edu_users_v18` | (legacy — غير تقني فعلياً) | اتركه |
-| `edu_session_v18` | (legacy — غير مستخدم) | اتركه |
+| `edu_projects_v24_ar` | كل المشاريع (JSON array) | **لا تغيّر هذا الاسم أبداً** |
+| `edu_users_v24` | قائمة المستخدمين (legacy — غير مستخدم فعلياً) | اتركه |
+| `edu_session_v24` | الجلسة (legacy — غير مستخدم) | اتركه |
 | `edu_deleted_ids_v1` | قائمة projectIds محذوفة محلياً (tombstones) | اتركه |
 | `sb-<project-ref>-auth-token` | جلسة Supabase (تديرها المكتبة) | اتركه |
 
@@ -693,7 +693,7 @@ where p.id is null;
 
 | العَرَض | السبب | الحل |
 |---|---|---|
-| شاشة الدخول تعرض "Invalid login credentials" دائماً | كلمة المرور خاطئة أو المستخدم محذوف | تحقّق من Users في Supabase |
+| شاشة الدخول تعرض "Invalid login credentials" دائماً | كلمة المرور خاطئة أو الحساب محذوف | تحقّق من Users في Supabase |
 | البادج عالق على "قيد الانتظار (N)" | فشل flush متكرر | Console → ابحث عن `[sync] item failed`. اقرأ السبب |
 | `new row violates row-level security policy` | يحاول تقني رفع مشروع لا يملكه | طبيعي إذا الـ owner_id لشخص آخر. الطابور يُفرغ العنصر تلقائياً |
 | الصور لا تظهر على جهاز آخر | مسار التخزين خاطئ أو RLS | Console → `[signed-url] failed` — أعد فحص سياسات التخزين |
@@ -767,7 +767,7 @@ console.log('Is anon key:', k.split('.')[1]
 // يجب أن يطبع: anon
 ```
 
-### B.3 فحص عزل RLS (زهراء تصل إلى مشروع مسؤول متابعة المشاريع)
+### B.3 فحص عزل RLS (زهراء تصل إلى مشروع مسؤول آخر)
 ```javascript
 (async () => {
   const { data: foreign } = await window.sb.from('projects')
@@ -825,11 +825,11 @@ console.log('Is anon key:', k.split('.')[1]
 
 **على مستوى الجداول:**
 - `auth.users` — يديره Supabase كلياً.
-- `profiles` — كل مصادَق يقرأ الجميع (لعرض القائمة)، يعدّل نفسه فقط. المدير يقرر الأدوار.
-- `projects` — كل تقني يقرأ/يكتب مشاريعه فقط. المدير كل شيء.
+- `profiles` — كل مصادَق يقرأ الجميع (لعرض القائمة)، يعدّل نفسه فقط. مسؤول متابعة المشاريع يقرر الأدوار.
+- `projects` — كل تقني يقرأ/يكتب مشاريعه فقط. مسؤول متابعة المشاريع يرى كل شيء.
 
 **على مستوى التخزين:**
-- ملف في `{projectId}/...` مرئي لمالك المشروع أو المدير.
+- ملف في `{projectId}/...` مرئي لمالك المشروع أو مسؤول متابعة المشاريع.
 - التحقق عبر `user_can_access_project_path` الذي يستعلم عن `projects` (security definer لتجاوز RLS الداخلي).
 
 **على مستوى Edge Function:**
@@ -857,7 +857,8 @@ console.log('Is anon key:', k.split('.')[1]
 | v21 | إصلاح قائمة الانتظار: drop failed items + scope per-user |
 | v22 | ربط UI بـ Edge Function |
 | v23 | إزالة بيانات الدخول التجريبية |
-| **v25** | **تنظيف نهائي + تثبيت المفاتيح** |
+| v24 | تنظيف نهائي + تثبيت المفاتيح |
+| **v25** | **إعادة تسمية: متابعة مشاريع البنية التحتية + التقنيون (تحديث نصوص الواجهة فقط؛ storage keys بقيت v24)** |
 
 **قاعدة:** عند كل تعديل على JS أو CSS أو HTML، ارفع VERSION في `sw.js`. عند تغيير المفاتيح في `config.js` فقط، ارفع أيضاً.
 
@@ -871,13 +872,14 @@ console.log('Is anon key:', k.split('.')[1]
 - [ ] نفّذت §2.4 (SQL سياسات التخزين) بنجاح.
 - [ ] عطّلت تسجيل الدخول العام في Auth Settings.
 - [ ] نشرت Edge Function `admin-users` بنجاح.
-- [ ] أنشأت أول تقني admin وأضفت صفّه في `profiles` يدوياً.
+- [ ] أنشأت أول مسؤول متابعة مشاريع (admin) وأضفت صفّه في `profiles` يدوياً.
 - [ ] النشر على Netlify يعمل، والدخول ناجح.
 - [ ] `SW_VERSION` الحالي `v25`.
+- [ ] `STORE_KEY` الحالي `edu_projects_v24_ar` (لم يُرفع — وإلا فُقد الكاش المحلي).
 - [ ] جميع اختبارات §5.1 و §5.2 تنجح.
 - [ ] لا توجد كلمات مرور في المستودع (تحقّق: `grep -r "Admin@123\|User@123" .`).
 - [ ] `todo.txt` محدَّث (راجع §2 من الرسالة التالية).
 
 ---
 
-© وزارة التربية والتعليم — للاستخدام الداخلي.
+© وزارة التربية — للاستخدام الداخلي.
