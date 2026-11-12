@@ -18,7 +18,7 @@ async function handleAction(act, id){
   if(act === 'progress'){ openProgressModal(p); return; }
 
   if(!isAdmin()){
-    toast('هذه العملية متاحة لمدير النظام فقط','bad');
+    toast('هذه العملية متاحة لمسؤول متابعة المشاريع  فقط','bad');
     return;
   }
 

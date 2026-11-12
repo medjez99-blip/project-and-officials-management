@@ -1,29 +1,27 @@
 ================================================================================
- TODO — إدارة المشاريع والمسؤولين
+ TODO — متابعة مشاريع البنية التحتية
 ================================================================================
+ STATUS: ✅ MIGRATION COMPLETE — 2026-11-10
  Working document. Update as you go.
  Format: [ ] to do  ·  [x] done  ·  [?] to consider  ·  [!] risk/blocker
 ================================================================================
 
 
 ================================================================================
- 0. CONTEXT & DECISIONS (locked in — do not re-litigate unless something breaks)
+ 0. CONTEXT & DECISIONS (locked in)
 ================================================================================
 
  Project type .......... Personal project, targeting a small limited group.
                           Not a public production system (yet).
- Data sensitivity ...... Modest. May add a policy file (privacy/terms) later.
-                          No compliance driver to solve for today.
- Hosting intent ........ Supabase managed (not self-hosted) — unless data-
-                          residency concern appears later.
+ Data sensitivity ...... Modest. No compliance driver today.
+ Hosting intent ........ Supabase managed. Not self-hosted.
  Offline behaviour ..... Local-first + sync. Writes land in IndexedDB first;
                           background push to Supabase. Network loss must not
-                          lose user data.
- Admin user creation ... Via a Supabase Edge Function calling admin.createUser.
+                          lose user data. ✅ Implemented.
+ Admin user creation ... Supabase Edge Function calling admin.createUser.
                           Keeps current UX: admin types name + email + password.
-                          No public signup form.
- Existing users ........ Force a password reset for everyone on cutover.
-                          Current SHA-256/cyrb53 hashes cannot be imported.
+                          No public signup form. ✅ Implemented.
+ Existing users ........ None to migrate (dev-only accounts, rotated at cutover).
 
  Out of scope (today):
    • Self-hosting Supabase
@@ -32,324 +30,212 @@
 
 
 ================================================================================
- 1. SUPABASE ROADMAP  (high level, ~2–3 days of focused work total)
+ 1. SUPABASE ROADMAP — ALL PHASES COMPLETE ✅
 ================================================================================
 
- Each phase is shippable on its own. Do not skip ahead. After every phase,
- the app must still open, sign in, and not lose data.
+────────────────────────────────────────────────────────────────────────────────
+ PHASE 1 — Foundation                                              ✅ DONE
+────────────────────────────────────────────────────────────────────────────────
+ [x] Created Supabase project (managed, closest region).
+ [x] Saved project URL, anon key, service_role key, DB password securely.
+ [x] Created tables: projects (id=text, name, data jsonb, updated_at, owner_id)
+                     profiles (id uuid → auth.users, name, email, role, created_at)
+ [x] Created storage bucket: visit-photos → PRIVATE.
+ [x] Turned off public signups in Authentication settings.
+ [x] Added project URL + anon key to config.js.
+ [x] Activated <script type="module" src="supabase.js"> in index.html.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 1 — Foundation   (≈45 min)
+ PHASE 2 — Auth migration                                          ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
- [ ] Create Supabase project (managed). Pick region closest to users.
- [ ] Save to a private note: project URL, anon key, service_role key,
-     DB password. → service_role key is server-only; never in client code.
- [ ] Create tables:
-       - projects   (see §2 for schema decision)
-       - profiles   (id, name, role, created_at) — role is critical for RLS
- [ ] Create storage bucket: visit-photos  →  PRIVATE (not public).
- [ ] Turn off public signups in Authentication → Providers → Email.
-     (Only admin-created accounts should exist.)
- [ ] Add project URL + anon key to config.js.
- [ ] Uncomment <script src="supabase.js"> in index.html.
-
- Gate: no data yet. Just make sure the app still loads.
+ [x] Wired supabase.js: initialized client, exposed window.sb.
+ [x] Replaced core.js auth functions:
+       signInWithPassword / signOut / getSession / profiles fetch.
+ [x] Deleted client-side SHA-256/cyrb53/randomSalt/hashPw (dead code gone).
+ [x] After signIn, fetches the user's profiles row → role in memory.
+ [x] Handles session restore on boot via getSession().
+ [x] Sign-in screen kept simple (no signup tab; contact admin note).
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 2 — Auth migration   (≈2 h)
+ PHASE 3 — Profiles + role plumbing                                ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
- [ ] Wire up supabase.js: initialize client, expose window.sb.
- [ ] Replace core.js auth functions:
-       - verifyUser         →  signInWithPassword
-       - saveSession        →  (handled by supabase-js internally)
-       - loadSession        →  getSession / onAuthStateChange
-       - clearSession       →  signOut
-       - hashPw / cyrb53 / randomSalt  →  DELETE (dead code after Phase 2)
-       - createUser         →  DELETE (moved to Edge Function, Phase 5)
- [ ] After signIn, fetch the user's `profiles` row to get role.
-     Store role in memory. Add it to `currentUser`.
- [ ] Handle the "session expired / token refresh" path — wire onAuthStateChange
-     so `currentUser` is always in sync.
- [ ] Sign-in screen: keep as is (no signup tab). Point sign-up intent at
-     "contact admin" note — already present.
-
- Gate: can sign in with a seeded Supabase user. No projects render yet.
+ [x] Trigger on auth.users insert creates matching profiles row
+     (name from metadata, role='user' by default).
+ [x] Verified: a user's role CANNOT be escalated by editing their own row
+     (RLS prevent_role_change trigger enforces this).
+ [x] renderUsersModal reads from profiles table, not localStorage.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 3 — Profiles + role plumbing   (≈1 h)
+ PHASE 4 — Local-first data layer                                  ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
- [ ] Trigger: on auth.users insert, create a matching profiles row
-     (name from metadata, role = 'user' by default, unless the caller was
-     already admin — see Phase 5 for how admin creates admins).
- [ ] Sanity check: a user's role CANNOT be escalated by editing their own
-     row (RLS enforces this — see §4).
- [ ] In `renderUsersModal`, the user list now comes from `profiles`, not
-     localStorage.
-
- Gate: sign in as two different accounts; each sees only their own profile.
-
-────────────────────────────────────────────────────────────────────────────────
- PHASE 4 — Local-first data layer   (≈1–2 days — the biggest phase)
-────────────────────────────────────────────────────────────────────────────────
-
- Architecture principle:
-   IndexedDB (or localStorage) = SOURCE OF TRUTH for the client.
-   Supabase           = SYNC TARGET + multi-device bridge.
-   The UI never blocks on a network call.
-
- Steps, in order — each is a shippable slice:
-
- [ ] 4a. Add a sync-queue table (IndexedDB) — one row per pending write:
-         { id, entity: 'project'|'visit'|'photo', op: 'upsert'|'delete',
-           payload, projectId, createdAt, retries }.
- [ ] 4b. Every write to `projects` in local state must also enqueue a
-         sync-queue row. `save()` becomes `saveLocally() + enqueue()`.
- [ ] 4c. Background flusher:
-         - On app start, on network online event, on a 30s timer:
-           drain the queue in order; on failure, retry with backoff.
-         - On success, remove the queue row.
- [ ] 4d. Pull on start / on login / on window focus:
-         - Fetch remote projects where updated_at > lastSyncTime.
-         - Merge: newest `updatedAt` wins per project. Do not overwrite
-           a locally-modified row that has a pending sync-queue entry.
- [ ] 4e. Conflict strategy (simple, sufficient for this app):
-         - Same project edited on two devices → last-write-wins by
-           `updatedAt`. Acceptable because a single user rarely edits
-           the same project from two devices simultaneously.
-         - Do NOT implement real merge for now. Note it in §6 open questions.
- [ ] 4f. Status indicator in the topbar: "Synced", "N pending", "Offline".
-         Small badge next to the user chip. Serves as diagnostic.
-
- Gate: turn off WiFi → create a project → turn WiFi on → project appears in
-       Supabase within 30s. No data loss.
+ [x] 4a. sync_queue table in IndexedDB (one row per pending write).
+ [x] 4b. saveWithSync() diffs against previous snapshot; enqueues changes.
+ [x] 4c. flushQueue() runs on boot, online event, 30s timer.
+ [x] 4d. pullFromSupabase() runs on boot and window focus.
+ [x] 4e. Conflict strategy: last-write-wins by updatedAt. Pending writes
+         take precedence over remote (no overwrite).
+ [x] 4f. Sync badge in topbar: synced / pending / syncing / offline.
+ [x] Tombstones (edu_deleted_ids_v1) ensure deletes survive mid-reload.
+ [x] Deterministic seed IDs (p_seed_1..6) to avoid duplicates across devices.
+ [x] Boot order: flush FIRST → pull → seed → flush. Prevents resurrections.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 5 — Admin user creation (Edge Function)   (≈2–4 h)
+ PHASE 5 — Admin user creation (Edge Function)                     ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
-
- Why an Edge Function: admin.createUser requires the service_role key, which
- MUST NOT live in browser code. The function runs server-side with that key,
- but only after verifying the caller is an admin.
-
- [ ] Create a Deno Edge Function `create-user`:
-       - Reads the caller's JWT from the Authorization header.
-       - Looks up the caller's role in `profiles`.
-       - If not 'admin' → 403.
-       - Else → calls admin.createUser(name, email, password).
-       - Optionally sets role = 'admin' if requested.
-       - Returns the created user's id.
- [ ] Deploy it: `supabase functions deploy create-user`.
- [ ] Update the "new user" form in the Users modal to call the function
-     instead of createUser().
- [ ] Add a parallel `reset-password` function (admin-only) that calls
-     admin.updateUserById({ password }).
- [ ] Error handling: show the function's error message in #nuErr / #pwErr.
-
- Gate: sign in as a non-admin, try to call the function via DevTools console →
-       403. Sign in as admin → 200 and the user exists.
+ [x] Deployed Deno Edge Function `admin-users` (create / reset-password /
+     delete-user / change-role).
+ [x] Function verifies caller JWT + profiles.role='admin' before any action.
+ [x] UI form for "new user" now calls the function.
+ [x] Password reset button now calls the function.
+ [x] Role dropdown now calls the function.
+ [x] Delete user button now calls the function.
+ [x] 403 returned to non-admins (verified via console).
+ [x] service_role key never touches the browser (Supabase injects it).
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 6 — RLS lockdown   (≈1 h)
+ PHASE 6 — RLS lockdown                                            ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
-
- This phase is not optional. Without it, anon key = full database access.
-
- [ ] Enable RLS on every table. No exceptions.
- [ ] projects policies:
-       - select: owner OR admin
-       - insert: owner_id = auth.uid()
-       - update: owner OR admin
-       - delete: owner OR admin
- [ ] profiles policies:
-       - select: any authenticated user (needed for the users roster)
-       - update: self for name only; role column only admin can change
-       - delete: admin only
- [ ] storage.objects for `visit-photos`:
-       - select: owner OR admin
-       - insert: owner
-       - delete: owner OR admin
- [ ] Test as a normal user: try to read another user's project via curl
-     with the anon key. Must return empty. If it returns data → policies
-     are wrong.
-
- Gate: two users, two browsers, verified isolation in both directions.
+ [x] RLS enabled on every table.
+ [x] projects policies: select/insert/update/delete (owner OR admin).
+ [x] profiles policies: select (any auth), update (self), delete (admin).
+ [x] storage.objects for visit-photos: 4 policies via user_can_access_project_path.
+ [x] Tested as normal user: cannot read another user's projects via REST API.
+ [x] Tested as normal user: cannot list another user's storage folder.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 7 — Photos migration   (≈2 h)
+ PHASE 7 — Photos migration                                        ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
-
- [ ] Keep IndexedDB photos as the local source of truth (offline requirement).
- [ ] On visit save: upload blob to `visit-photos` bucket → store the path
-     in the visit object. Keep the blob locally too.
- [ ] Display: use supabase.storage.createSignedUrl(path, 3600) instead of
-     getPublicUrl (bucket is private).
- [ ] Delete visit → delete local blob AND remote object.
- [ ] Migration of existing photos: one-off script that iterates
-     IndexedDB and uploads each blob. Do this once, then delete the script.
-
- Gate: photo from device A appears on device B after sync.
+ [x] IndexedDB photos stay as local source of truth (offline).
+ [x] On visit save: upload blob to visit-photos bucket → path = {projectId}/{photoId}.jpg
+ [x] Display: supabase.storage.createSignedUrl(path, 3600) — bucket is private.
+ [x] Delete visit → delete local blob AND enqueue remote delete.
+ [x] Delete project → enqueue remote deletes BEFORE local removal (RLS-safe).
+ [x] Migration: local blobs for old visits are re-enqueued if remote missing.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 8 — Force password reset for existing users   (≈1 h + comms)
+ PHASE 8 — Password rotation for existing demo accounts            ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
- [ ] Export the current users list from localStorage (for reference).
- [ ] For each user: create them in Supabase with a temporary password
-     (or via invite email). The Edge Function can do this in bulk.
- [ ] Communicate to the group: "Check your email / use this temporary
-     password, then change it on first login."
- [ ] Track who has reset. Delete the old localStorage users list once
-     everyone's migrated.
+ [x] Rotated admin@ministry.gov password (demo defaults dead).
+ [x] Rotated f.zahra@ministry.gov password (demo defaults dead).
+ [x] Removed demo credentials from index.html auth screen.
+ [x] Removed demo credentials table from README.md.
+ [x] Verified old passwords are rejected by Supabase.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 9 — Verification pass   (≈1 h)
+ PHASE 9 — Verification pass                                       ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
- [ ] Run the console diagnostic snippet (search this project for the
-     "══ DIAGNOSTIC ══" snippet — save it to a scratch file for reuse).
- [ ] Offline test: DevTools → Network → Offline.
-     - Create project → reload → data persists (IndexedDB).
-     - Go online → sync queue drains.
- [ ] Multi-device: two browsers, same account → real-time-ish sync
-     (worst case: 30s poll — acceptable for this app).
- [ ] Role isolation: normal user cannot see admin buttons, cannot call
+ [x] Offline test: create project → reload → data persists.
+ [x] Online recovery: sync queue drains.
+ [x] Multi-device: two browsers, same account → sync via focus-pull.
+ [x] Role isolation: normal user cannot see admin buttons, cannot call
      admin-only Edge Functions.
- [ ] Password reset flow: admin resets a user's password → user signs in
-     with new password on next attempt.
+ [x] Password reset flow: admin resets → user signs in with new password.
+ [x] Photo sync: local-only photo appears on second device via signed URL.
+ [x] Tombstones: delete survives reload-immediately.
 
 ────────────────────────────────────────────────────────────────────────────────
- PHASE 10 — Backup & cleanup   (≈30 min)
+ PHASE 10 — Backup & cleanup                                       ✅ DONE
 ────────────────────────────────────────────────────────────────────────────────
- [ ] Enable Supabase automatic daily backups (free tier has 7-day retention).
- [ ] Remove dead code in core.js: hashPw, cyrb53, randomSalt, saveSession,
-     loadSession, clearSession, verifyUser, createUser, loadUsers, saveUsers,
+ [x] Supabase automatic daily backups enabled (7-day retention on free tier).
+ [x] Removed dead auth code from core.js:
+     saveSession, loadSession, clearSession, randomSalt, hashPw,
+     loadUsers, saveUsers, findUserByEmail, createUser, verifyUser,
      seedUsers, cleanupLegacyAuth.
- [ ] Remove the localStorage migration path once verified — OR keep it behind
-     a feature flag for one release.
- [ ] Update README.md: "serverless" claim is now false. Rewrite the storage
-     section. Add the Supabase project URL reference (not the key).
- [ ] Update sw.js VERSION one more time.
+ [x] localStorage keys frozen (edu_projects_v25_ar, edu_users_v18,
+     edu_session_v18) — will never be bumped again.
+ [x] Deleted stale localStorage keys from previous versions.
+ [x] README.md rewritten for Supabase architecture.
+ [x] Created OPERATIONS.md (full handoff document).
+ [x] sw.js bumped to v25.
 
 
 ================================================================================
- 2. TABLE SCHEMA STRATEGY  — how to keep columns easy to add/remove
+ 2. TABLE SCHEMA (as deployed)
 ================================================================================
-
- Requirement: I want to add or drop fields on a project (e.g. new field
- "budget", "contact_email2", "risk_level") WITHOUT writing SQL every time.
-
- Answer: store the whole project as a single `data jsonb` column.
 
  projects table:
-   id          uuid     PK, generated
-   owner_id    uuid     → auth.users.id
-   name        text     (denormalized from data.name, for sorting/searching)
-   data        jsonb    (the WHOLE project object — every field lives here)
-   updated_at  timestamptz  (for sync delta)
+   id          text PK               ← NOT uuid (matches app's uid() format)
+   owner_id    uuid → auth.users.id (ON DELETE CASCADE)
+   name        text                  (denormalized for sorting)
+   data        jsonb                 (full project object — every field lives here)
+   updated_at  timestamptz           (auto-updated by trigger)
 
- Consequences:
-   + Adding a field = a UI change only. No ALTER TABLE.
-   + Matches the current JS object shape exactly — no mapper layer.
-   + Restoring a backup = insert one row per project.
-   - Filtering/searching on a specific field is slow unless you add a
-     generated column or an index.
-     → For this app: all filtering happens client-side already. Fine.
-   - No per-field type checking at the DB level.
-     → Client-side validation covers it.
-
- Rule of thumb:
-   Stay in `data jsonb`  →  anything the UI shows or edits.
-   Promote to a real column → only when:
-     • It must be enforced by an RLS policy (e.g. owner_id), OR
-     • It is queried on every page load and needs an index
-       (e.g. name if the list gets huge).
-
- profiles table (DO NOT make this jsonb — role must be RLS-checkable):
-   id          uuid     PK → auth.users.id
+ profiles table (NOT jsonb — role must be RLS-checkable):
+   id          uuid PK → auth.users.id (ON DELETE CASCADE)
    name        text
-   email       text     (denormalized, read-only)
-   role        text     CHECK (role IN ('admin','user'))
+   email       text                  (denormalized)
+   role        text CHECK IN ('admin','user')
    created_at  timestamptz
 
  visit-photos bucket:
    Path convention: {project_id}/{photo_id}.jpg
    → Easy to bulk-delete all photos of a project.
+   → Path prefix is used by storage RLS policy to verify project ownership.
+
+ Rule of thumb (unchanged):
+   Stay in `data jsonb` → anything the UI shows or edits.
+   Promote to a real column → only when:
+     • It must be enforced by an RLS policy (owner_id), OR
+     • It is queried on every page load and needs an index.
 
 
 ================================================================================
- 3. THINGS TO CONSIDER  (not scheduled — decide when relevant)
+ 3. THINGS TO CONSIDER (post-migration)
 ================================================================================
 
  [?] Data residency:
-       Personal project, small group → Supabase managed in the closest region
-       is fine today. If a policy file (privacy / terms) is added later and
-       mentions "data stays in country X", revisit: either self-host Supabase
-       (Docker) or migrate to a managed service with a local region.
-       Add this as a line item in the policy file when written.
+       Currently managed in Supabase's default region. If a policy file
+       later mentions "data stays in country X", revisit hosting location.
 
  [?] Cost:
-       Free tier: 500 MB DB, 1 GB storage, 50k MAU. This app uses a fraction.
-       Watch: storage grows with photos. At 1 GB, photos cap out — plan an
-       "export and delete old visits" feature (see §4 data extraction).
+       Free tier: 500 MB DB, 1 GB storage, 50k MAU.
+       Watch: storage grows with photos. Each stamped photo ≈ 200–400 KB.
+       At 1 GB → ~2500 photos cap. Plan "export and delete old visits" if needed.
 
  [?] Backups:
-       Free tier = 7-day retention. Add a manual "export JSON" habit
-       (already in the app) once a month. Or schedule a GitHub Action that
-       hits the Supabase REST API and commits a JSON snapshot.
+       Free tier = 7-day retention. Manual export via app UI is still available.
+       Consider a GitHub Action hitting Supabase REST API monthly for archival.
 
  [?] Offline completeness:
-       Local-first + sync means some features will lag until online:
-         - User list (roster) — cache last fetched, show "offline — stale".
-         - Signed photo URLs expire after 1h — cache blobs locally, do not
-           rely on the URL for offline display.
-       Define acceptable staleness per feature. Document it.
+       ✓ Projects: fully offline.
+       ✓ Photos (recent): available via local IndexedDB.
+       ✗ Photos (fresh device): require network for signed URL.
+       ✗ User roster: cached from last fetch, refresh on focus.
 
  [?] Delete semantics:
-       Hard delete everywhere (current behaviour) or soft delete (deleted_at
-       column)? Soft delete = recoverable + syncable. Hard delete = simpler.
-       For small group, hard delete is fine — but add a "trash" period later
-       if users ask.
-
- [?] Photo storage growth:
-       Each stamped photo ≈ 200–400 KB. 50 visits × 5 photos ≈ 60 MB.
-       Free tier 1 GB → ~80 projects with full visit history. Fine for now.
+       Hard delete everywhere. Tombstones in localStorage ensure the delete
+       reaches Supabase eventually. No soft-delete / trash period.
 
  [?] Session refresh:
-       Supabase tokens expire. supabase-js auto-refreshes — but ensure
-       onAuthStateChange keeps currentUser in sync. Otherwise a stale role
-       cache could leak admin buttons.
+       Supabase-js auto-refreshes tokens. onAuthStateChange keeps currentUser
+       in sync. No manual session handling needed.
 
- [?] Deno Edge Function cold start:
-       First invocation after inactivity takes ~1s. Fine for admin actions
-       (rare). If it becomes annoying, add a warm-up ping on app load.
-
- [?] Service worker cache vs Supabase:
-       sw.js already bypasses supabase.co — keep that rule. Do not add
-       Supabase API responses to the shell cache; the app's own
-       local-first layer handles offline.
+ [?] Service worker vs Supabase:
+       sw.js bypasses supabase.co — API responses are not cached.
+       The app's local-first layer handles offline state for those.
 
 
 ================================================================================
- 4. FUTURE FEATURES  (my plans — not in the current roadmap)
+ 4. FUTURE FEATURES (ideas — not scheduled)
 ================================================================================
 
 ── Synchronization ─────────────────────────────────────────────────────────────
  [ ] Real-time updates via Supabase Realtime (postgres_changes) → replace
-     the 30s poll. Only useful once there are 2+ active users.
- [ ] Sync status panel (DevTools-style) — see flow diagnostics below.
+     the 30s poll + focus-pull. Only useful once there are 2+ active users.
  [ ] Per-project "last synced" indicator in the table.
+ [ ] Diagnostics modal (admin only): sync queue depth, last sync time per
+     entity, failed attempts + retry button, session expiry, SW version,
+     Supabase reachability.
 
 ── Push notifications ──────────────────────────────────────────────────────────
  [ ] Web Push API + a small Edge Function to fan-out.
-     Use cases:
-       - "Your project X is due in 3 days"
-       - "Admin added you to project Y"
+     Use cases: "Your project X is due in 3 days", "Admin added you to project Y".
  [ ] Requires VAPID keys + permission prompt + a notification worker.
- [ ] Consider email instead of push for v1 (simpler, no per-browser setup).
-     Supabase Edge Functions + Resend/SMTP = 1 evening.
+ [ ] Consider email instead of push for v1 (simpler).
 
 ── Data extraction ────────────────────────────────────────────────────────────
- [ ] CSV export (per project, with visits flattened)  — partially exists.
+ [ ] CSV export with visits flattened (currently CSV = one row per project).
  [ ] PDF report per project (visits, photos, location, notes).
-     Use a client-side PDF lib (jsPDF) — no server cost.
  [ ] Full-account backup: zip = projects.json + photos/ + README.
  [ ] REST API read-only endpoint (for downstream tools) — Edge Function.
 
@@ -360,69 +246,59 @@
  [ ] Session timeout policy (currently 30 days — maybe shorter for admins).
  [ ] Password policy: min length 10, no reuse — enforced at Edge Function.
 
-── Flow diagnostics ───────────────────────────────────────────────────────────
- [ ] A "Diagnostics" modal (admin only) that shows:
-       - Sync queue depth
-       - Last successful sync time per entity
-       - Failed sync attempts with error messages + retry button
-       - Session state (expires in X)
-       - Service worker version
-       - Supabase reachability ping
- [ ] Console helper: window.diag() → prints the above as a table.
- [ ] Global error handler → toast "something went wrong" + log to a local
-     ring buffer (last 50 errors) for the diagnostics modal to read.
-
-── History ────────────────────────────────────────────────────────────────────
- [ ] Per-project change log (append-only table: project_id, user, changed_at,
-     diff jsonb). Lets admin undo an accidental edit.
- [ ] Visit history (already sortable by timestamp — good enough for now).
- [ ] Restore from backup inside the app (currently: manual JSON re-import).
-
 ── UX / polish ────────────────────────────────────────────────────────────────
  [ ] Search across visits (currently project-level only).
  [ ] Bulk actions (multi-select → assign responsible, change status).
  [ ] Print view for the projects table.
- [ ] Dark mode (main.css is already light-only; needs a variable pass).
+ [ ] Dark mode (main.css is light-only; needs a variable pass).
+ [ ] "Update available" toast when a new service worker is ready.
+
+── Accessibility ──────────────────────────────────────────────────────────────
+ [ ] Fix aria-hidden-on-focused-element warnings in console (modals).
+ [ ] Full keyboard navigation audit.
 
 
 ================================================================================
- 5. RISKS / OPEN QUESTIONS
+ 5. RISKS / OPEN QUESTIONS (all resolved unless noted)
 ================================================================================
 
- [!] "owner" definition mismatch.
-     Currently `isOwner()` matches by email OR responsible-name. With
-     Supabase, ownership should be a real FK (owner_id → auth.users.id).
-     Decide: does a project get reassigned when "responsible" changes in
-     the UI? Or is owner_id separate from responsible? → Answer before
-     Phase 4.
+ [x] "owner" definition — RESOLVED.
+     Ownership = owner_id in projects table.
+     resolveOwnerId() maps: project.email → profiles.email, then
+     project.responsible → profiles.name, then fallback currentUser.id.
+     Reassignment happens naturally when the email field changes in the UI.
 
- [!] Conflict strategy simplicity.
-     Last-write-wins is fine until two people edit the same project
-     simultaneously. If that becomes common, need per-field merge. Not
-     today.
+ [x] Conflict strategy — RESOLVED.
+     Last-write-wins by updatedAt. Acceptable because a single user rarely
+     edits the same project from two devices simultaneously.
 
- [?] Edge Function cold start + region.
-     Deploy the function in the same region as the DB. Otherwise +200 ms
-     latency per admin action.
+ [?] Edge Function cold start + region — MONITOR.
+     First invocation after inactivity takes ~1s. Fine for admin actions (rare).
+     Deploy the function in the same region as the DB.
 
- [?] Admin editing their own password via the reset-password function.
-     Works, but the current UI hides the reset button on self. Decide:
-     allow or not. (Recommendation: allow — it's a common UX expectation.)
+ [?] Admin editing their own password via reset-password.
+     Currently the UI hides the reset button on self. Decide: allow or not.
+     (Recommendation: allow — it's a common UX expectation.)
 
- [?] What happens when the service worker updates while a user is mid-session?
-     Currently: skipWaiting() + clients.claim() = silent takeover.
-     If a user is filling a form during the takeover, nothing is lost
-     (state is in DOM), but a mid-upload photo could be interrupted.
-     Acceptable for now. Consider "update available" toast in a later pass.
+ [?] Service worker updates mid-session.
+     skipWaiting() + clients.claim() = silent takeover. Form state is preserved
+     (in DOM), but a mid-upload photo could be interrupted. Acceptable.
 
- [?] Storage cleanup on project delete.
-     Deleting a project must delete its photos from Storage too, or the
-     bucket grows. Do it in an Edge Function (server-side, RLS-safe).
+ [x] Storage cleanup on project delete — RESOLVED.
+     Enqueued photo-deletes BEFORE project removal, so RLS on the still-
+     existing project row allows the delete.
 
- [?] Photo signed URLs expiring.
-     A cached HTML page showing a photo URL that expired = broken image.
-     Mitigation: always fetch blobs to IndexedDB and render from blob URLs
-     (already what the current lightbox does). Keep that behaviour.
+ [x] Photo signed URLs expiring — RESOLVED.
+     Local blob URLs are preferred. Signed URLs only used as fallback for
+     fresh devices; expiry (1h) is longer than any typical session refresh.
+
+ [x] Queued writes blocking the entire queue — RESOLVED.
+     flushQueue() drops permanent failures (RLS/permission/not-found/invalid)
+     and continues. Only transient errors (network) break the loop for retry.
+
+ [x] Tombstone resurrection — RESOLVED.
+     markDeletedLocally() is synchronous (localStorage). Even a mid-reload
+     delete leaves a tombstone. pullFromSupabase honors tombstones.
 
 
 ================================================================================
@@ -436,12 +312,18 @@
  Docs: Edge Functions ......... https://supabase.com/docs/guides/functions
  Docs: Realtime ............... https://supabase.com/docs/guides/realtime
 
- Current app state (as of this file's last edit):
-   • Local-only storage (localStorage + IndexedDB)
-   • Custom SHA-256 auth (to be removed)
-   • PWA with sw.js v8
-   • Admin-only user creation (client-side, to be moved to Edge Function)
-   • No sync layer yet
+ Current app state (as of 2026-11-10):
+   • Supabase Auth (email/password, no public signup)
+   • Local-first storage (localStorage + IndexedDB) + background sync
+   • PWA with sw.js v25
+   • Admin-only user creation via Edge Function
+   • Photo upload to private storage with signed-URL fallback
+   • RLS enforced on all tables + storage
+   • Tombstones + diff-based sync queue + last-write-wins merge
+   • Deprecated auth stubs removed from core.js
+   • localStorage keys frozen — will never be bumped again
+
+ Handoff document: OPERATIONS.md
 
 
 ================================================================================

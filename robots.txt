@@ -1,6 +1,5 @@
-# بوابة إدارة داخلية محمية بتسجيل الدخول — يُمنع الفهرسة
+# بوابة إدارة داخلية — لا فهرسة
 User-agent: *
-Allow: /
-# Disallow: /
+Disallow: /
 
-Sitemap: https://project-and-officials-management.netlify.app/sitemap.xml
+# لا يوجد sitemap: التطبيق محمي بتسجيل الدخول ولا يُفهرس.
