@@ -65,7 +65,9 @@ document.addEventListener('click', e => {
 });
 
 /* ===================== الفلاتر ===================== */
-['#search','#filterStatus','#filterPriority','#filterEntity','#filterSort'].forEach(sel => {
+['#search','#filterStatus','#filterPriority','#filterEntity',
+ '#filterDelegation','#filterIntervention','#filterCompletionStage','#filterContractor',
+ '#filterSort'].forEach(sel => {
   const el = $(sel);
   el.addEventListener(sel === '#search' ? 'input' : 'change', () => {
     renderTable();
@@ -108,8 +110,11 @@ $('#btnCsv').addEventListener('click', () => {
 	'delegation','entityType','entityName',
 	'interventionType','interventionTypeOther',
 	'funding','fundingOther',
-	'responsible','role','email','phone',
-	'status','priority','startDate','endDate','progress','notes'
+  'commitmentCost','adminAuthDate',
+  'completionStage','completionStageOther',
+  'contractorName','contractorPhone','contractorEmail',
+  'responsible','role','email','phone',
+  'status','priority','startDate','endDate','progress','notes'
 ];
   const head = cols.join(',');
   const rows = projects.map(p => cols.map(c => {

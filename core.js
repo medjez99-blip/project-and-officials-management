@@ -54,6 +54,11 @@ const FUNDING_AR = {
 	civil_society:     'مجتمع مدني',
 	other:             'أخرى'
 };
+const COMPLETION_STAGE_AR = {
+	in_progress: 'بصدد الإنجاز',
+	stopped:     'توقف الأشغال',
+	other:       'أخرى'
+};
 const isClosed = p => p.status === 'completed' || p.status === 'cancelled';
 const prioRank = pr => ({critical:0,high:1,medium:2,low:3}[pr] ?? 9);
 const pad2 = n => String(n).padStart(2,'0');
@@ -284,16 +289,16 @@ async function saveWithSync(){
 	for(const p of projects){
 		currentMap.set(p.id, JSON.stringify(p));
 	}
-
+	
 	// 2) Snapshot FIRST so re-entrant renders don't double-queue
 	const prev = _lastSyncSnapshot;
 	_lastSyncSnapshot = currentMap;
-
+	
 	// 3) Persist to localStorage immediately — never lose data if enqueue fails
 	save();
-
+	
 	if(!prev) return; // very first call after boot: nothing to diff against
-
+	
 	// 4) Queue upserts for new or changed projects
 	for(const [id, json] of currentMap){
 		if(prev.get(id) !== json){
@@ -455,7 +460,7 @@ function startSyncLoop(){
 	_flushTimer = setInterval(() => { flushQueue(); }, 30000);
 	window.addEventListener('online',  () => { updateSyncBadge(); flushQueue(); });
 	window.addEventListener('offline', () => { updateSyncBadge(); });
-
+	
 	let _focusTimer = null;
 	window.addEventListener('focus', () => {
 		clearTimeout(_focusTimer);
@@ -464,14 +469,14 @@ function startSyncLoop(){
 			await pullFromSupabase();
 		}, 500);
 	});
-
+	
 	updateSyncBadge();
 }
 /* ===================== Sync: pull from Supabase (Phase 4d+4e) ===================== */
 async function pullFromSupabase(){
 	if(!window.sb || !currentUser) return;
 	if(!navigator.onLine) return;
-
+	
 	// 1) Which project IDs have pending writes? Never overwrite those.
 	const pendingIds = new Set();
 	const queued = await listSyncQueue();
@@ -487,12 +492,12 @@ async function pullFromSupabase(){
 		console.warn('[pull] failed:', e.message || e);
 		return;
 	}
-
+	
 	// 3) Merge: LWW by updatedAt, per project ID
 	const localMap = new Map(projects.map(p => [p.id, p]));
 	const merged = [];
 	let pulled = 0, conflicts = 0;
-
+	
 	for(const row of remote){
 		const remoteProj = Object.assign({}, row.data, {
 			id: row.id,
@@ -511,7 +516,7 @@ async function pullFromSupabase(){
 			if(localProj){ merged.push(localProj); localMap.delete(row.id); }
 			continue;
 		}
-
+		
 		if(!localProj){
 			// New from remote
 			merged.push(remoteProj);
@@ -529,7 +534,7 @@ async function pullFromSupabase(){
 			localMap.delete(row.id);
 		}
 	}
-
+	
 	// 4) Remaining local-only projects: keep them, enqueue upsert if not queued
 	let queuedOut = 0;
 	for(const [id, p] of localMap){
@@ -539,13 +544,13 @@ async function pullFromSupabase(){
 			catch(e){ console.warn('[pull] enqueue failed', e); }
 		}
 	}
-
+	
 	// 5) Commit
 	projects = merged;
 	_lastSyncSnapshot = null;   // prevent the diff engine from re-queueing everything
 	save();                     // persist to localStorage immediately
 	render();                   // redraw; saveWithSync sees _lastSyncSnapshot=null → no re-enqueue
-
+	
 	console.log(`[pull] pulled=${pulled} conflicts=${conflicts} queuedOut=${queuedOut} total=${projects.length}`);
 }
 /* ===================== تخزين المشاريع ===================== */
@@ -573,6 +578,11 @@ function blank(){
 		delegation:'',
 		interventionType:'', interventionTypeOther:'',
 		funding:'', fundingOther:'',
+		commitmentCost:'',
+		adminAuthDate:'',
+		completionStage:'', completionStageOther:'',
+		contractorName:'', contractorPhone:'', contractorEmail:'',
+		
 		responsible:'', role:'', email:'', phone:'',
 		status:'planned', priority:'medium',
 		startDate:'', endDate:'', progress:0, notes:'',
@@ -586,32 +596,32 @@ function seed(){
 			entityName:'ثانوية النور', responsible:'فاطمة الزهراء',
 			role:'منسقة المشروع', email:'f.zahra@ministry.gov', phone:'+212 600 112 334',
 			status:'active', priority:'high', startDate: shiftISO(-40), endDate: shiftISO(5),
-		progress:70, notes:'تمت الموافقة على مناقصة المعدات. مرحلة التركيب قيد الانتظار.' },
+		progress:70, notes:'تمت الموافقة على مناقصة المعدات. مرحلة التركيب قيد الانتظار.', adminAuthDate: shiftISO(-55), commitmentCost:'85000', completionStage:'in_progress', contractorName:'شركة البناء الحديثة', contractorPhone:'+216 71 000 000', contractorEmail:'contact@binaa.tn' },
 		{ name:'تفعيل الحضور الرقمي', code:'EDU-2026-021', entityType:'Office',
 			entityName:'المديرية الإقليمية الشمالية', responsible:'عمر حداد',
 			role:'مسؤول تقنية المعلومات', email:'o.haddad@ministry.gov', phone:'+212 661 908 220',
 			status:'active', priority:'critical', startDate: shiftISO(-70), endDate: shiftISO(-3),
-		progress:45, notes:'مدرستان لم تفعّلا النظام بعد — يجب التصعيد إلى المكتب الإقليمي.' },
+		progress:45, notes:'مدرستان لم تفعّلا النظام بعد — يجب التصعيد إلى المكتب الإقليمي.', adminAuthDate: shiftISO(-55), commitmentCost:'85000', completionStage:'in_progress', contractorName:'شركة البناء الحديثة', contractorPhone:'+216 71 000 000', contractorEmail:'contact@binaa.tn' },
 		{ name:'برنامج تدريب المعلمين', code:'EDU-2026-008', entityType:'Office',
 			entityName:'مكتب الموارد البشرية', responsible:'ليلى منصور',
 			role:'مديرة التدريب', email:'l.mansour@ministry.gov', phone:'+212 655 447 118',
 			status:'active', priority:'medium', startDate: shiftISO(-20), endDate: shiftISO(25),
-		progress:60, notes:'اكتملت 3 دفعات، بقيت دفعتان.' },
+		progress:60, notes:'اكتملت 3 دفعات، بقيت دفعتان.', adminAuthDate: shiftISO(-55), commitmentCost:'85000', completionStage:'in_progress', contractorName:'شركة البناء الحديثة', contractorPhone:'+216 71 000 000', contractorEmail:'contact@binaa.tn' },
 		{ name:'تجديد المكتبة', code:'EDU-2026-031', entityType:'School',
 			entityName:'مدرسة ابن سينا الابتدائية', responsible:'يوسف كريم',
 			role:'مسؤول المرافق', email:'y.karim@ministry.gov', phone:'+212 677 331 905',
 			status:'planned', priority:'low', startDate: shiftISO(10), endDate: shiftISO(90),
-		progress:0, notes:'بانتظار تأكيد بند الميزانية من الإدارة المالية.' },
+		progress:0, notes:'بانتظار تأكيد بند الميزانية من الإدارة المالية.', adminAuthDate: shiftISO(-55), commitmentCost:'85000', completionStage:'in_progress', contractorName:'شركة البناء الحديثة', contractorPhone:'+216 71 000 000', contractorEmail:'contact@binaa.tn' },
 		{ name:'تدقيق مسارات النقل', code:'EDU-2026-019', entityType:'Directorate',
 			entityName:'المديرية المركزية', responsible:'حسن علي',
 			role:'مدقق', email:'h.ali@ministry.gov', phone:'+212 690 552 741',
 			status:'onhold', priority:'high', startDate: shiftISO(-15), endDate: shiftISO(3),
-		progress:20, notes:'بانتظار بيانات شركة النقل.' },
+		progress:20, notes:'بانتظار بيانات شركة النقل.', adminAuthDate: shiftISO(-55), commitmentCost:'85000', completionStage:'in_progress', contractorName:'شركة البناء الحديثة', contractorPhone:'+216 71 000 000', contractorEmail:'contact@binaa.tn' },
 		{ name:'نظام جدولة الامتحانات', code:'EDU-2025-102', entityType:'Office',
 			entityName:'مكتب تقنية المعلومات', responsible:'سارة نبيل',
 			role:'محللة نظم', email:'s.nabil@ministry.gov', phone:'+212 611 220 480',
 			status:'completed', priority:'medium', startDate: shiftISO(-120), endDate: shiftISO(-20),
-		progress:100, notes:'تم التسليم وتحويله إلى فريق التشغيل.' }
+		progress:100, notes:'تم التسليم وتحويله إلى فريق التشغيل.', adminAuthDate: shiftISO(-55), commitmentCost:'85000', completionStage:'in_progress', contractorName:'شركة البناء الحديثة', contractorPhone:'+216 71 000 000', contractorEmail:'contact@binaa.tn' }
 	].map((p, i) => ({ id: 'p_seed_' + (i + 1), ...p, visits: [], createdAt: now, updatedAt: now }));
 }
 
@@ -637,22 +647,22 @@ function drawStamp(ctx, w, h, meta){
     : '📍 الموقع غير متاح';
 	const whoStr = `👤 ${meta.userName}${meta.projectName ? ' · ' + meta.projectName : ''}`;
 	const lines = [dateStr, locStr, whoStr];
-
+	
 	const fontSize = Math.max(11, Math.round(w / 55));
 	const padding = Math.round(fontSize * 0.95);
 	const lineHeight = Math.round(fontSize * 1.5);
 	const boxHeight = padding * 2 + lineHeight * lines.length;
 	const boxY = h - boxHeight;
-
+	
 	ctx.fillStyle = 'rgba(8, 20, 35, 0.74)';
 	ctx.fillRect(0, boxY, w, boxHeight);
 	ctx.fillStyle = '#E8B84B';
 	ctx.fillRect(0, boxY, w, 3);
-
+	
 	ctx.textBaseline = 'top';
 	ctx.textAlign = 'right';
 	if('direction' in ctx) ctx.direction = 'rtl';
-
+	
 	lines.forEach((line, i) => {
 		ctx.font = `${i === 0 ? 'bold ' : ''}${fontSize}px Tajawal, Arial, sans-serif`;
 		ctx.fillStyle = i === 0 ? '#ffffff' : 'rgba(255,255,255,0.88)';
@@ -666,15 +676,15 @@ async function processPhoto(file, meta){
 	const scale = Math.min(1, MAX / Math.max(w, h));
 	w = Math.max(1, Math.round(w * scale));
 	h = Math.max(1, Math.round(h * scale));
-
+	
 	const canvas = document.createElement('canvas');
 	canvas.width = w; canvas.height = h;
 	const ctx = canvas.getContext('2d');
 	ctx.drawImage(img, 0, 0, w, h);
 	drawStamp(ctx, w, h, meta);
-
+	
 	const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.78));
-
+	
 	const TMAX = 220;
 	const tscale = Math.min(1, TMAX / Math.max(w, h));
 	const tw = Math.max(1, Math.round(w * tscale));
@@ -683,7 +693,7 @@ async function processPhoto(file, meta){
 	tcanvas.width = tw; tcanvas.height = th;
 	tcanvas.getContext('2d').drawImage(canvas, 0, 0, tw, th);
 	const thumbDataUrl = tcanvas.toDataURL('image/jpeg', 0.65);
-
+	
 	return { blob, thumbDataUrl, width: w, height: h };
 }
 /* ===================== المصادقة — Supabase (Phase 2) ===================== */
@@ -777,7 +787,7 @@ async function bootAuth(){
 				if(localStorage.getItem(k)) localStorage.removeItem(k);
 			});
 	}catch(_){}
-
+	
 	// Wait up to 3s for window.sb (module scripts are deferred)
 	for(let i = 0; i < 30 && !window.sb; i++){
 		await new Promise(r => setTimeout(r, 100));

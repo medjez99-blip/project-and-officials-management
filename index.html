@@ -211,6 +211,25 @@
 						<option value="Directorate">مديريات</option>
 						<option value="Other">أخرى</option>
 					</select>
+					<select class="filter" id="filterDelegation">
+    <option value="">كل المعتمديات</option>
+</select>
+<select class="filter" id="filterIntervention">
+    <option value="">كل أنواع التدخل</option>
+    <option value="expansion">توسيعات</option>
+    <option value="maintenance">صيانة</option>
+    <option value="construction">احداث</option>
+    <option value="other">أخرى</option>
+</select>
+<select class="filter" id="filterCompletionStage">
+    <option value="">كل مراحل الإنجاز</option>
+    <option value="in_progress">بصدد الإنجاز</option>
+    <option value="stopped">توقف الأشغال</option>
+    <option value="other">أخرى</option>
+</select>
+<select class="filter" id="filterContractor">
+    <option value="">كل المقاولين</option>
+</select>
 					<select class="filter" id="filterSort">
 						<option value="due">ترتيب: تاريخ الاستحقاق</option>
 						<option value="priority">ترتيب: الأولوية</option>
@@ -244,6 +263,10 @@
 <th>المسؤول</th>
 <th>نوعية التدخل</th>
 <th>التمويل</th>
+<th>كلفة التعهد</th>
+<th>تاريخ الاذن الإداري</th>
+<th>مرحلة الإنجاز</th>
+<th>المقاولة</th>
 								<th>الحالة</th>
 								<th>الأولوية</th>
 								<th>الفترة</th>
@@ -319,6 +342,48 @@
 		<label class="radio-item"><input type="radio" name="pFunding" value="other"><span>أخرى</span></label>
 	</div>
 	<textarea id="pFundingOther" class="hidden" placeholder="يرجى تحديد مصدر التمويل الآخر…" maxlength="200"></textarea>
+</div>
+<!-- ═══ كلفة التعهد ═══ -->
+<div class="field" id="wrapCommitmentCost">
+  <label for="pCommitmentCost">كلفة التعهد (د.ت)</label>
+  <input type="text" id="pCommitmentCost" inputmode="decimal"
+         placeholder="مثال: 150000" maxlength="30" dir="ltr">
+</div>
+
+<!-- ═══ تاريخ الإذن الإداري (إجباري) ═══ -->
+<div class="field" id="wrapAdminAuthDate">
+  <label for="pAdminAuthDate">تاريخ الإذن الإداري <span class="req">*</span></label>
+  <input type="date" id="pAdminAuthDate">
+  <span class="err">تاريخ الإذن الإداري مطلوب.</span>
+</div>
+
+<!-- ═══ مرحلة الإنجاز ═══ -->
+<div class="field full">
+  <label>مرحلة الإنجاز</label>
+  <div class="radio-group">
+    <label class="radio-item"><input type="radio" name="pCompletionStage" value="in_progress"><span>بصدد الإنجاز</span></label>
+    <label class="radio-item"><input type="radio" name="pCompletionStage" value="stopped"><span>توقف الأشغال</span></label>
+    <label class="radio-item"><input type="radio" name="pCompletionStage" value="other"><span>أخرى</span></label>
+  </div>
+  <textarea id="pCompletionStageOther" class="hidden"
+            placeholder="يرجى تحديد مرحلة الإنجاز…" maxlength="200"></textarea>
+</div>
+
+<!-- ═══ بيانات المقاولة ═══ -->
+<div class="field full">
+  <label style="margin-bottom:6px">بيانات المقاولة</label>
+</div>
+<div class="field full">
+  <label for="pContractorName">الاسم واللقب</label>
+  <input type="text" id="pContractorName" placeholder="الاسم الكامل للمقاول" maxlength="120">
+</div>
+<div class="field">
+  <label for="pContractorPhone">رقم الهاتف</label>
+  <input type="text" id="pContractorPhone" dir="ltr" placeholder="+216 71 000 000" maxlength="40">
+</div>
+<div class="field">
+  <label for="pContractorEmail">البريد الإلكتروني</label>
+  <input type="email" id="pContractorEmail" dir="ltr" placeholder="contact@company.tn" maxlength="120">
 </div>
 							<div class="field" id="wrapResp">
 								<label for="pResponsible">المسؤول <span class="req">*</span></label>

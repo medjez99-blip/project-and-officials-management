@@ -167,22 +167,69 @@ function renderReminders(){
 		'</div>';
 	}).join('');
 }
-
+/* ===================== الفلاتر الديناميكية ===================== */
+/* يبني قوائم المعتمدية والمقاولة من المشاريع الموجودة.
+   يحافظ على القيمة المختارة إن كانت ما تزال موجودة. */
+function renderFilterOptions(){
+	const dlSel = $('#filterDelegation');
+	if(dlSel){
+		const current = dlSel.value;
+		const values = Array.from(new Set(
+			projects.map(p => (p.delegation || '').trim()).filter(Boolean)
+		)).sort((a,b) => a.localeCompare(b, 'ar'));
+		dlSel.innerHTML = '<option value="">كل المعتمديات</option>' +
+			values.map(v => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('');
+		if(current && values.includes(current)) dlSel.value = current;
+	}
+	
+	const coSel = $('#filterContractor');
+	if(coSel){
+		const current = coSel.value;
+		const values = Array.from(new Set(
+			projects.map(p => (p.contractorName || '').trim()).filter(Boolean)
+		)).sort((a,b) => a.localeCompare(b, 'ar'));
+		coSel.innerHTML = '<option value="">كل المقاولين</option>' +
+			values.map(v => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('');
+		if(current && values.includes(current)) coSel.value = current;
+	}
+}
 /* ===================== الفلاتر والترتيب ===================== */
 function filteredSorted(){
-	const q = $('#search').value.trim().toLowerCase();
+	const q  = $('#search').value.trim().toLowerCase();
 	const st = $('#filterStatus').value;
 	const pr = $('#filterPriority').value;
 	const en = $('#filterEntity').value;
+	const dl = $('#filterDelegation').value;
+	const it = $('#filterIntervention').value;
+	const cs = $('#filterCompletionStage').value;
+	const co = $('#filterContractor').value;
 	const sort = $('#filterSort').value;
 	
 	let list = visibleProjects().filter(p => {
 		if(st && p.status !== st) return false;
 		if(pr && p.priority !== pr) return false;
 		if(en && p.entityType !== en) return false;
+		if(dl && p.delegation !== dl) return false;
+		if(it && p.interventionType !== it) return false;
+		if(cs && p.completionStage !== cs) return false;
+		if(co && p.contractorName !== co) return false;
 		if(!q) return true;
-		const hay = [p.name,p.code,p.entityName,p.responsible,p.role,p.email,p.phone,p.notes]
-		.filter(Boolean).join(' ').toLowerCase();
+		const hay = [
+			p.name, p.code, p.delegation, p.entityName, p.responsible, p.role,
+			p.email, p.phone, p.notes,
+			p.commitmentCost,
+			p.adminAuthDate,
+			// نوعية التدخل — raw value + Arabic label + free text
+			p.interventionType,
+			INTERVENTION_AR[p.interventionType] || '',
+			p.interventionTypeOther,
+			// مرحلة الإنجاز — raw value + Arabic label + free text
+			p.completionStage,
+			COMPLETION_STAGE_AR[p.completionStage] || '',
+			p.completionStageOther,
+			// المقاولة
+			p.contractorName, p.contractorPhone, p.contractorEmail
+		].filter(Boolean).join(' ').toLowerCase();
 		return hay.includes(q);
 	});
 	
@@ -193,13 +240,13 @@ function filteredSorted(){
 			if(ca !== cb) return ca ? 1 : -1;
 			return (a.endDate||'9999-12-31').localeCompare(b.endDate||'9999-12-31');
 		});
-		} else if(sort === 'priority'){
+	} else if(sort === 'priority'){
 		list.sort((a,b) => prioRank(a.priority) - prioRank(b.priority));
-		} else if(sort === 'name'){
+	} else if(sort === 'name'){
 		list.sort((a,b) => a.name.localeCompare(b.name,'ar'));
-		} else if(sort === 'progress'){
+	} else if(sort === 'progress'){
 		list.sort((a,b) => (Number(b.progress)||0) - (Number(a.progress)||0));
-		} else if(sort === 'updated'){
+	} else if(sort === 'updated'){
 		list.sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||''));
 	}
 	return list;
@@ -217,7 +264,7 @@ function renderTable(){
 		const m = isAdmin()
 		? { title:'لا توجد مشاريع بعد', text:'اضغط على «مشروع جديد» لإضافة أول مشروع.' }
 		: { title:'لا توجد مشاريع مسندة إليك', text:'سيظهر هنا أي مشروع يتم تعيينك مسؤولاً عنه.' };
-		tbody.innerHTML = '<tr><td colspan="12" class="empty">' +
+		tbody.innerHTML = '<tr><td colspan="16" class="empty">' +
 		'<div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>' +
 		'<div class="empty-title">' + esc(m.title) + '</div>' +
 		'<div class="empty-text">' + esc(m.text) + '</div>' +
@@ -226,7 +273,7 @@ function renderTable(){
 	}
 	
 	if(!list.length){
-		tbody.innerHTML = '<tr><td colspan="12" class="empty">' +
+		tbody.innerHTML = '<tr><td colspan="16" class="empty">' +
 		'<div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>' +
 		'<div class="empty-title">لا نتائج مطابقة</div>' +
 		'<div class="empty-text">جرّب تغيير كلمات البحث أو الفلاتر.</div>' +
@@ -249,16 +296,16 @@ function renderTable(){
         (visitCount ? '<span class="badge-count">' + visitCount + '</span>' : '') +
 		'</button>';
 		const delegation = p.delegation || '—';
-const itLabel = p.interventionType === 'other'
-	? 'أخرى'
-	: (INTERVENTION_AR[p.interventionType] || '—');
-const itSub = p.interventionType === 'other' && p.interventionTypeOther
-	? p.interventionTypeOther.slice(0, 40) : '';
-const fundLabel = p.funding === 'other'
-	? 'أخرى'
-	: (FUNDING_AR[p.funding] || '—');
-const fundSub = p.funding === 'other' && p.fundingOther
-	? p.fundingOther.slice(0, 40) : '';
+		const itLabel = p.interventionType === 'other'
+		? 'أخرى'
+		: (INTERVENTION_AR[p.interventionType] || '—');
+		const itSub = p.interventionType === 'other' && p.interventionTypeOther
+		? p.interventionTypeOther.slice(0, 40) : '';
+		const fundLabel = p.funding === 'other'
+		? 'أخرى'
+		: (FUNDING_AR[p.funding] || '—');
+		const fundSub = p.funding === 'other' && p.fundingOther
+		? p.fundingOther.slice(0, 40) : '';
 		const actions = isAdmin()
 		? visitsBtn +
         '<button class="icon-btn" data-act="edit" data-id="' + p.id + '" title="تعديل">' +
@@ -276,62 +323,91 @@ const fundSub = p.funding === 'other' && p.fundingOther
         '</button>';
 		
 		return '<tr data-id="' + p.id + '">' +
+		
+		// 1. المشروع
+		'<td>' +
+		'<div class="p-name"><button class="p-name-btn" data-act="visits" data-id="' + p.id + '" title="عرض سجل الزيارات">' + esc(p.name) + '</button></div>' +
+		(meta ? '<div class="p-meta">' + esc(meta) + '</div>' : '') +
+		'</td>' +
+		
+		// 2. المعتمدية
+		'<td>' + esc(delegation) + '</td>' +
+		
+		// 3. المؤسسة
+		'<td>' +
+		'<div>' + esc(p.entityName || '—') + '</div>' +
+		'<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div>' +
+		'</td>' +
+		
+		// 4. المسؤول
+		'<td>' +
+		'<div style="font-weight:600">' + esc(p.responsible || '—') + '</div>' +
+		'<div class="cell-sub">' + esc([p.role, p.phone].filter(Boolean).join(' · ') || '—') + '</div>' +
+		'</td>' +
+		
+		// 5. نوعية التدخل
+		'<td>' +
+		'<div>' + esc(itLabel) + '</div>' +
+		(itSub ? '<div class="cell-sub">' + esc(itSub) + '</div>' : '') +
+		'</td>' +
+		
+		// 6. التمويل
+		'<td>' +
+		'<div>' + esc(fundLabel) + '</div>' +
+		(fundSub ? '<div class="cell-sub">' + esc(fundSub) + '</div>' : '') +
+		'</td>' +
+		// ★ كلفة التعهد
+'<td>' +
+  (p.commitmentCost
+    ? '<span dir="ltr" style="display:inline-block">' + esc(p.commitmentCost) + '</span> ' +
+      '<span style="color:var(--muted);font-size:11.5px">د.ت</span>'
+    : '—') +
+'</td>' +
 
-  // 1. المشروع
-  '<td>' +
-    '<div class="p-name"><button class="p-name-btn" data-act="visits" data-id="' + p.id + '" title="عرض سجل الزيارات">' + esc(p.name) + '</button></div>' +
-    (meta ? '<div class="p-meta">' + esc(meta) + '</div>' : '') +
-  '</td>' +
+// ★ تاريخ الاذن الإداري
+'<td>' + (p.adminAuthDate ? esc(fmtDate(p.adminAuthDate)) : '—') + '</td>' +
 
-  // 2. المعتمدية
-  '<td>' + esc(delegation) + '</td>' +
+// ★ مرحلة الإنجاز
+(function(){
+  const cs = p.completionStage || '';
+  if(cs === 'in_progress') return '<td><span class="badge active">بصدد الإنجاز</span></td>';
+  if(cs === 'stopped')     return '<td><span class="badge onhold">توقف الأشغال</span></td>';
+  if(cs === 'other'){
+    const sub = p.completionStageOther ? '<div class="cell-sub">' + esc(p.completionStageOther.slice(0, 40)) + '</div>' : '';
+    return '<td><span class="badge planned">أخرى</span>' + sub + '</td>';
+  }
+  return '<td>—</td>';
+})() +
 
-  // 3. المؤسسة
-  '<td>' +
-    '<div>' + esc(p.entityName || '—') + '</div>' +
-    '<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div>' +
-  '</td>' +
-
-  // 4. المسؤول
-  '<td>' +
-    '<div style="font-weight:600">' + esc(p.responsible || '—') + '</div>' +
-    '<div class="cell-sub">' + esc([p.role, p.phone].filter(Boolean).join(' · ') || '—') + '</div>' +
-  '</td>' +
-
-  // 5. نوعية التدخل
-  '<td>' +
-    '<div>' + esc(itLabel) + '</div>' +
-    (itSub ? '<div class="cell-sub">' + esc(itSub) + '</div>' : '') +
-  '</td>' +
-
-  // 6. التمويل
-  '<td>' +
-    '<div>' + esc(fundLabel) + '</div>' +
-    (fundSub ? '<div class="cell-sub">' + esc(fundSub) + '</div>' : '') +
-  '</td>' +
-
-  // 7. الحالة
-  '<td><span class="badge ' + esc(p.status) + '">' + esc(STATUS_AR[p.status] || p.status) + '</span></td>' +
-
-  // 8. الأولوية
-  '<td><span class="badge ' + esc(p.priority) + '">' + esc(PRIORITY_AR[p.priority] || p.priority) + '</span></td>' +
-
-  // 9. الفترة
-  '<td>' + period + '</td>' +
-
-  // 10. التقدم
-  '<td><div class="prog ' + (prog >= 100 ? 'done' : '') + '">' +
-    '<div class="prog-bar"><div class="prog-fill" style="width:' + prog + '%"></div></div>' +
-    '<div class="prog-txt">' + prog + '%</div>' +
-  '</div></td>' +
-
-  // 11. التذكير
-  '<td><span class="rem ' + r.cls + '">' + esc(r.text) + '</span></td>' +
-
-  // 12. الإجراءات
-  '<td class="actions">' + actions + '</td>' +
-
-'</tr>';
+// ★ المقاولة
+'<td>' +
+  (p.contractorName  ? '<div style="font-weight:600">' + esc(p.contractorName) + '</div>' : '') +
+  (p.contractorPhone ? '<div class="cell-sub" dir="ltr" style="text-align:right">' + esc(p.contractorPhone) + '</div>' : '') +
+  (p.contractorEmail ? '<div class="cell-sub" dir="ltr" style="text-align:right;overflow:hidden;text-overflow:ellipsis;max-width:180px">' + esc(p.contractorEmail) + '</div>' : '') +
+  (!p.contractorName && !p.contractorPhone && !p.contractorEmail ? '—' : '') +
+'</td>' +
+		// 7. الحالة
+		'<td><span class="badge ' + esc(p.status) + '">' + esc(STATUS_AR[p.status] || p.status) + '</span></td>' +
+		
+		// 8. الأولوية
+		'<td><span class="badge ' + esc(p.priority) + '">' + esc(PRIORITY_AR[p.priority] || p.priority) + '</span></td>' +
+		
+		// 9. الفترة
+		'<td>' + period + '</td>' +
+		
+		// 10. التقدم
+		'<td><div class="prog ' + (prog >= 100 ? 'done' : '') + '">' +
+		'<div class="prog-bar"><div class="prog-fill" style="width:' + prog + '%"></div></div>' +
+		'<div class="prog-txt">' + prog + '%</div>' +
+		'</div></td>' +
+		
+		// 11. التذكير
+		'<td><span class="rem ' + r.cls + '">' + esc(r.text) + '</span></td>' +
+		
+		// 12. الإجراءات
+		'<td class="actions">' + actions + '</td>' +
+		
+		'</tr>';
 	}).join('');
 }
 async function updateSyncBadge(){
@@ -349,6 +425,7 @@ async function updateSyncBadge(){
 }
 
 function render(){
+	renderFilterOptions();
 	renderStats();
 	renderReminders();
 	renderTable();
@@ -490,14 +567,24 @@ function openModal(p){
 	$('#pEntityType').value = d.entityType || 'School';
 	$('#pEntityName').value = d.entityName || '';
 	$('#pDelegation').value = d.delegation || '';
-
-$$('input[name="pInterventionType"]').forEach(r => { r.checked = (r.value === d.interventionType); });
-$('#pInterventionTypeOther').value = d.interventionTypeOther || '';
-$('#pInterventionTypeOther').classList.toggle('hidden', d.interventionType !== 'other');
-
-$$('input[name="pFunding"]').forEach(r => { r.checked = (r.value === d.funding); });
-$('#pFundingOther').value = d.fundingOther || '';
-$('#pFundingOther').classList.toggle('hidden', d.funding !== 'other');
+	
+	$$('input[name="pInterventionType"]').forEach(r => { r.checked = (r.value === d.interventionType); });
+	$('#pInterventionTypeOther').value = d.interventionTypeOther || '';
+	$('#pInterventionTypeOther').classList.toggle('hidden', d.interventionType !== 'other');
+	
+	$$('input[name="pFunding"]').forEach(r => { r.checked = (r.value === d.funding); });
+	$('#pFundingOther').value = d.fundingOther || '';
+	$('#pFundingOther').classList.toggle('hidden', d.funding !== 'other');
+	$('#pCommitmentCost').value = d.commitmentCost || '';
+	$('#pAdminAuthDate').value  = d.adminAuthDate  || '';
+	
+	$$('input[name="pCompletionStage"]').forEach(r => { r.checked = (r.value === d.completionStage); });
+	$('#pCompletionStageOther').value = d.completionStageOther || '';
+	$('#pCompletionStageOther').classList.toggle('hidden', d.completionStage !== 'other');
+	
+	$('#pContractorName').value  = d.contractorName  || '';
+	$('#pContractorPhone').value = d.contractorPhone || '';
+	$('#pContractorEmail').value = d.contractorEmail || '';
 	$('#pResponsible').value = d.responsible || '';
 	$('#pRole').value = d.role || '';
 	$('#pEmail').value = d.email || '';
@@ -523,6 +610,8 @@ function closeModal(){
 function readForm(){
 	const itRadio = $$('input[name="pInterventionType"]').find(r => r.checked);
 	const fRadio  = $$('input[name="pFunding"]').find(r => r.checked);
+	const csRadio = $$('input[name="pCompletionStage"]').find(r => r.checked);
+const csVal = csRadio ? csRadio.value : '';
 	const itVal   = itRadio ? itRadio.value : '';
 	const fVal    = fRadio  ? fRadio.value  : '';
 	return {
@@ -535,6 +624,13 @@ function readForm(){
 		interventionTypeOther: itVal === 'other' ? $('#pInterventionTypeOther').value.trim() : '',
 		funding: fVal,
 		fundingOther: fVal === 'other' ? $('#pFundingOther').value.trim() : '',
+	commitmentCost:       $('#pCommitmentCost').value.trim(),
+adminAuthDate:        $('#pAdminAuthDate').value,
+completionStage:      csVal,
+completionStageOther: csVal === 'other' ? $('#pCompletionStageOther').value.trim() : '',
+contractorName:       $('#pContractorName').value.trim(),
+contractorPhone:      $('#pContractorPhone').value.trim(),
+contractorEmail:      $('#pContractorEmail').value.trim(),
 		responsible: $('#pResponsible').value.trim(),
 		role: $('#pRole').value.trim(),
 		email: $('#pEmail').value.trim(),
@@ -555,6 +651,7 @@ function validate(d){
 	if(d.startDate && d.endDate && d.endDate < d.startDate){
 		$('#wrapEnd').classList.add('invalid'); ok = false;
 	}
+if(!d.adminAuthDate){ $('#wrapAdminAuthDate').classList.add('invalid'); ok = false; }
 	if(!ok) toast('يرجى تصحيح الحقول المطلوبة','bad');
 	return ok;
 }
@@ -589,6 +686,11 @@ $$('input[name="pFunding"]').forEach(r => r.addEventListener('change', () => {
 	const other = r.value === 'other';
 	$('#pFundingOther').classList.toggle('hidden', !other);
 	if(other) setTimeout(() => $('#pFundingOther').focus(), 40);
+}));
+$$('input[name="pCompletionStage"]').forEach(r => r.addEventListener('change', () => {
+  const other = r.value === 'other';
+  $('#pCompletionStageOther').classList.toggle('hidden', !other);
+  if(other) setTimeout(() => $('#pCompletionStageOther').focus(), 40);
 }));
 $('#pResponsible').addEventListener('input', e => {
 	const name = e.target.value.trim().toLowerCase();
