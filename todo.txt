@@ -172,7 +172,7 @@
    → Easy to bulk-delete all photos of a project.
    → Path prefix is used by storage RLS policy to verify project ownership.
 
- Rule of thumb (unchanged):
+ Rule of thumb:
    Stay in `data jsonb` → anything the UI shows or edits.
    Promote to a real column → only when:
      • It must be enforced by an RLS policy (owner_id), OR

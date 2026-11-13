@@ -276,36 +276,62 @@ const fundSub = p.funding === 'other' && p.fundingOther
         '</button>';
 		
 		return '<tr data-id="' + p.id + '">' +
-		'<td>' +
-        '<div class="p-name"><button class="p-name-btn" data-act="visits" data-id="' + p.id + '" title="عرض سجل الزيارات">' + esc(p.name) + '</button></div>' +
-        (meta ? '<div class="p-meta">' + esc(meta) + '</div>' : '') +
-		'</td>' +
-		'<td><div>' + esc(p.entityName || '—') + '</div>' +
-        '<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div></td>' +
-		'<td><div style="font-weight:600">' + esc(p.responsible || '—') + '</div>' +
-        '<div class="cell-sub">' + esc([p.role, p.phone].filter(Boolean).join(' · ') || '—') + '</div></td>' +
-		
 
-	'<td>' + esc(delegation) + '</td>' +
+  // 1. المشروع
+  '<td>' +
+    '<div class="p-name"><button class="p-name-btn" data-act="visits" data-id="' + p.id + '" title="عرض سجل الزيارات">' + esc(p.name) + '</button></div>' +
+    (meta ? '<div class="p-meta">' + esc(meta) + '</div>' : '') +
+  '</td>' +
 
-	'<td><div>' + esc(p.entityName || '—') + '</div>' +
-	'<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div></td>' +
+  // 2. المعتمدية
+  '<td>' + esc(delegation) + '</td>' +
 
-	'<td><div>' + esc(itLabel) + '</div>' +
-	(itSub ? '<div class="cell-sub">' + esc(itSub) + '</div>' : '') + '</td>' +
+  // 3. المؤسسة
+  '<td>' +
+    '<div>' + esc(p.entityName || '—') + '</div>' +
+    '<div class="cell-sub">' + esc(ENTITY_AR[p.entityType] || '') + '</div>' +
+  '</td>' +
 
-	'<td>... responsible (unchanged) ...</td>' +
+  // 4. المسؤول
+  '<td>' +
+    '<div style="font-weight:600">' + esc(p.responsible || '—') + '</div>' +
+    '<div class="cell-sub">' + esc([p.role, p.phone].filter(Boolean).join(' · ') || '—') + '</div>' +
+  '</td>' +
 
-	'<td><div>' + esc(fundLabel) + '</div>' +
-	(fundSub ? '<div class="cell-sub">' + esc(fundSub) + '</div>' : '') + '</td>' +
-		'<td><span class="badge ' + esc(p.status) + '">' + esc(STATUS_AR[p.status] || p.status) + '</span></td>' +
-		'<td><span class="badge ' + esc(p.priority) + '">' + esc(PRIORITY_AR[p.priority] || p.priority) + '</span></td>' +
-		'<td>' + period + '</td>' +
-		'<td><div class="prog ' + (prog >= 100 ? 'done' : '') + '">' +
-        '<div class="prog-bar"><div class="prog-fill" style="width:' + prog + '%"></div></div>' +
-        '<div class="prog-txt">' + prog + '%</div></div></td>' +
-		'<td><span class="rem ' + r.cls + '">' + esc(r.text) + '</span></td>' +
-		'<td class="actions">' + actions + '</td></tr>';
+  // 5. نوعية التدخل
+  '<td>' +
+    '<div>' + esc(itLabel) + '</div>' +
+    (itSub ? '<div class="cell-sub">' + esc(itSub) + '</div>' : '') +
+  '</td>' +
+
+  // 6. التمويل
+  '<td>' +
+    '<div>' + esc(fundLabel) + '</div>' +
+    (fundSub ? '<div class="cell-sub">' + esc(fundSub) + '</div>' : '') +
+  '</td>' +
+
+  // 7. الحالة
+  '<td><span class="badge ' + esc(p.status) + '">' + esc(STATUS_AR[p.status] || p.status) + '</span></td>' +
+
+  // 8. الأولوية
+  '<td><span class="badge ' + esc(p.priority) + '">' + esc(PRIORITY_AR[p.priority] || p.priority) + '</span></td>' +
+
+  // 9. الفترة
+  '<td>' + period + '</td>' +
+
+  // 10. التقدم
+  '<td><div class="prog ' + (prog >= 100 ? 'done' : '') + '">' +
+    '<div class="prog-bar"><div class="prog-fill" style="width:' + prog + '%"></div></div>' +
+    '<div class="prog-txt">' + prog + '%</div>' +
+  '</div></td>' +
+
+  // 11. التذكير
+  '<td><span class="rem ' + r.cls + '">' + esc(r.text) + '</span></td>' +
+
+  // 12. الإجراءات
+  '<td class="actions">' + actions + '</td>' +
+
+'</tr>';
 	}).join('');
 }
 async function updateSyncBadge(){
