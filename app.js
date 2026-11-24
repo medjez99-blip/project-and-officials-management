@@ -4,6 +4,8 @@
    يعتمد على: core.js, ui.js (يجب أن يأتي أخيراً).
    ==================================================== */
 
+const y = document.getElementById('footerYear');
+if (y) y.textContent = new Date().getFullYear();
 /* ===================== الإجراءات على المشاريع ===================== */
 async function deleteProjectPhotos(project){
   const ids = (project.visits || []).flatMap(v => v.photoIds || []);
@@ -82,7 +84,7 @@ $('#btnRemind').addEventListener('click', () => {
   panel.style.transition = 'box-shadow .3s';
   panel.style.boxShadow = '0 0 0 4px rgba(20,80,122,.25)';
   setTimeout(() => { panel.style.boxShadow = ''; }, 1200);
-  if(!attentionList().length) toast('لا توجد مواعيد بحاجة إلى متابعة','ok');
+  if(!attentionList().length) toast('لا توجد تذكيرات نشطة حالياً','ok');
 });
 
 /* ===================== تصدير / استيراد / مسح ===================== */

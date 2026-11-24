@@ -27,6 +27,10 @@
    • Self-hosting Supabase
    • Multi-tenancy
    • SSO / OAuth providers
+ Recent additions (2026-11-13):
+   • 4 administrative columns added to the projects table view and data model.
+   • 4 filter selects added; search extended to cover them.
+   • sw.js bumped v27 → v28.
 
 
 ================================================================================
@@ -248,6 +252,8 @@
 
 ── UX / polish ────────────────────────────────────────────────────────────────
  [ ] Search across visits (currently project-level only).
+ [ ] Sort/filter by adminAuthDate or commitmentCost (currently filter-only on the 4 new fields).
+ [ ] Export report filtered by completionStage (e.g. PDF of stopped projects only).
  [ ] Bulk actions (multi-select → assign responsible, change status).
  [ ] Print view for the projects table.
  [ ] Dark mode (main.css is light-only; needs a variable pass).
@@ -312,16 +318,29 @@
  Docs: Edge Functions ......... https://supabase.com/docs/guides/functions
  Docs: Realtime ............... https://supabase.com/docs/guides/realtime
 
- Current app state (as of 2026-11-10):
+ Current app state (as of 2026-11-13):
    • Supabase Auth (email/password, no public signup)
    • Local-first storage (localStorage + IndexedDB) + background sync
-   • PWA with sw.js v25
+   • PWA with sw.js v28
    • Admin-only user creation via Edge Function
    • Photo upload to private storage with signed-URL fallback
    • RLS enforced on all tables + storage
    • Tombstones + diff-based sync queue + last-write-wins merge
    • Deprecated auth stubs removed from core.js
    • localStorage keys frozen — will never be bumped again
+   • Project data model extended (stored inside data jsonb — schema unchanged):
+       commitmentCost  (كلفة التعهد، نص رقمي + وحدة "د.ت")
+       adminAuthDate   (تاريخ الإذن الإداري، إجباري)
+       completionStage (in_progress | stopped | other)
+       completionStageOther (نص حر عند اختيار "أخرى")
+       contractorName / contractorPhone / contractorEmail (أي منها أو جميعها)
+   • Table has 16 columns (was 12); CSV export matches
+   • Search spans جميع الحقول الجديدة + التسميات العربية
+   • Filter bar has 4 additional selects:
+       المعتمدية (dynamic from data)
+       نوعية التدخل (static)
+       مرحلة الإنجاز (static)
+       المقاولة (dynamic by contractorName)
 
  Handoff document: OPERATIONS.md
 

@@ -6,22 +6,82 @@
 ==================================================== */
 
 /* ===================== التذكيرات ===================== */
+/* نوعان من التذكيرات:
+   1) مشاريع تقترب من تاريخ الانتهاء (أو تجاوزته)
+   2) مشاريع مضى على آخر زيارة لها NO_VISIT_DAYS يوم أو أكثر
+   (لا يوجد تسجيل زيارة بعد الإنشاء يُحسب كـ "لم تُسجَّل زيارات"). */
+
+const NEAR_DUE_DAYS = 7;    // عدد الأيام قبل تاريخ الانتهاء لبدء التنبيه
+const NO_VISIT_DAYS = 21;   // عتبة "بدون زيارة"
+
+function lastActivityTimestamp(p){
+	let last = p.createdAt || '';
+	for(const v of (p.visits || [])){
+		if(v && v.timestamp && v.timestamp > last) last = v.timestamp;
+	}
+	return last || null;
+}
+function daysSinceActivity(p){
+	const last = lastActivityTimestamp(p);
+	if(!last) return null;
+	const t = Date.parse(last);
+	if(isNaN(t)) return null;
+	return Math.floor((Date.now() - t) / DAY);
+}
+
 function reminderInfo(p){
 	if(isClosed(p)) return { cls:'ok', text:'—', days:null };
-	if(!p.endDate)  return { cls:'ok', text:'بدون تاريخ استحقاق', days:null };
-	const d = daysUntil(p.endDate);
-	if(d === null)  return { cls:'ok', text:'تاريخ غير صالح', days:null };
-	if(d < 0)       return { cls:'overdue', text:'متأخر ' + daysLabel(d), days:d };
-	if(d === 0)     return { cls:'soon', text:'يستحق اليوم', days:d };
-	if(d <= 7)      return { cls:'soon', text:'خلال ' + daysLabel(d), days:d };
-	return { cls:'ok', text:fmtDate(p.endDate), days:d };
+
+	// 1) تاريخ الانتهاء
+	let due = null;
+	if(p.endDate){
+		const d = daysUntil(p.endDate);
+		if(d !== null){
+			if(d < 0)                    due = { cls:'overdue', text:'متأخر ' + daysLabel(d), days:d };
+			else if(d === 0)             due = { cls:'soon',    text:'يستحق اليوم', days:d };
+			else if(d <= NEAR_DUE_DAYS)  due = { cls:'soon',    text:'خلال ' + daysLabel(d), days:d };
+		}
+	}
+	if(due && due.cls === 'overdue') return due;
+
+	// 2) آخر زيارة
+	const sd = daysSinceActivity(p);
+	if(sd !== null && sd >= NO_VISIT_DAYS){
+		const neverVisited = !(p.visits && p.visits.length);
+		return {
+			cls:  'stale',
+			text: neverVisited ? 'لم تُسجَّل زيارات' : 'آخر زيارة منذ ' + daysLabel(sd),
+			days: sd
+		};
+	}
+
+	if(due) return due;
+	return { cls:'ok', text: p.endDate ? fmtDate(p.endDate) : '—', days:null };
 }
+
+function reminderBuckets(){
+	const vis = visibleProjects().filter(p => !isClosed(p));
+	const due = [], stale = [];
+	for(const p of vis){
+		if(p.endDate){
+			const d = daysUntil(p.endDate);
+			if(d !== null && d <= NEAR_DUE_DAYS) due.push({ p, d });
+		}
+		const sd = daysSinceActivity(p);
+		if(sd !== null && sd >= NO_VISIT_DAYS) stale.push({ p, days: sd });
+	}
+	due.sort((a,b) => a.d - b.d);
+	stale.sort((a,b) => b.days - a.days);
+	return { due, stale };
+}
+
+/* Back-compat helper: unique union of both kinds */
 function attentionList(){
-	return visibleProjects()
-    .filter(p => !isClosed(p) && p.endDate)
-    .map(p => ({ p, d: daysUntil(p.endDate) }))
-    .filter(x => x.d !== null && x.d <= 7)
-    .sort((a,b) => a.d - b.d);
+	const { due, stale } = reminderBuckets();
+	const seen = new Set(), out = [];
+	for(const x of due)   if(!seen.has(x.p.id)){ seen.add(x.p.id); out.push({ p:x.p, kind:'due'   }); }
+	for(const x of stale) if(!seen.has(x.p.id)){ seen.add(x.p.id); out.push({ p:x.p, kind:'stale' }); }
+	return out;
 }
 /* ===================== نافذة تأكيد مخصّصة ===================== */
 function confirmDialog(opts){
@@ -85,12 +145,13 @@ function renderStats(){
 	const total = vis.length;
 	const active = vis.filter(p => p.status === 'active').length;
 	const completed = vis.filter(p => p.status === 'completed').length;
-	const att = attentionList();
-	const overdue = att.filter(x => x.d < 0).length;
-	const soon = att.filter(x => x.d >= 0).length;
+	const { due, stale } = reminderBuckets();
+	const overdue = due.filter(x => x.d < 0).length;
+	const soon    = due.filter(x => x.d >= 0).length;
+	const staleCount = stale.length;
 	const open = vis.filter(p => !isClosed(p));
 	const avg = open.length ? Math.round(open.reduce((s,p)=>s+(Number(p.progress)||0),0)/open.length) : 0;
-	
+
 	const cards = [
 		{ label: isAdmin() ? 'إجمالي المشاريع' : 'مشاريعي', value: total, sub: active + ' نشطة حالياً',
 			icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
@@ -98,9 +159,12 @@ function renderStats(){
 		{ label:'متأخرة', value: overdue, sub:'تجاوزت تاريخ الانتهاء',
 			icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
 		bg:'#FEE2E2', fg:'#B91C1C' },
-		{ label:'مستحقة هذا الأسبوع', value: soon, sub:'خلال الـ 7 أيام القادمة',
+		{ label:'مستحقة هذا الأسبوع', value: soon, sub:'خلال الـ ' + NEAR_DUE_DAYS + ' أيام القادمة',
 			icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
 		bg:'#FEF3C7', fg:'#B45309' },
+		{ label:'بدون زيارة', value: staleCount, sub:'منذ ' + NO_VISIT_DAYS + '+ يوم',
+			icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+		bg:'#E0F2FE', fg:'#0369A1' },
 		{ label:'مكتملة', value: completed, sub:'مغلقة بنجاح',
 			icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
 		bg:'#DCFCE7', fg:'#15803D' },
@@ -108,14 +172,14 @@ function renderStats(){
 			icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
 		bg:'#DBEAFE', fg:'#1D4ED8' }
 	];
-	
+
 	$('#stats').innerHTML = cards.map(c =>
 		'<div class="stat">' +
 		'<div class="stat-icon" style="background:' + c.bg + ';color:' + c.fg + '">' + c.icon + '</div>' +
 		'<div class="stat-info">' +
-        '<span class="stat-label">' + esc(c.label) + '</span>' +
-        '<span class="stat-value">' + esc(c.value) + '</span>' +
-        '<span class="stat-sub">' + esc(c.sub) + '</span>' +
+			'<span class="stat-label">' + esc(c.label) + '</span>' +
+			'<span class="stat-value">' + esc(c.value) + '</span>' +
+			'<span class="stat-sub">' + esc(c.sub) + '</span>' +
 		'</div>' +
 		'</div>'
 	).join('');
@@ -123,49 +187,91 @@ function renderStats(){
 
 /* ===================== التذكيرات (رسم) ===================== */
 function renderReminders(){
-	const att = attentionList();
+	const { due, stale } = reminderBuckets();
 	const panel = $('#reminderPanel');
-	const list = $('#remindersList');
-	const bell = $('#bellCount');
+	const list  = $('#remindersList');
+	const bell  = $('#bellCount');
 	const title = $('#reminderTitle');
 	const count = $('#remindersCount');
-	
-	bell.textContent = att.length;
-	bell.className = 'bell-badge' + (att.length === 0 ? ' zero' : '');
-	
-	if(!att.length){
+
+	const uniqueIds = new Set();
+	due.forEach(x => uniqueIds.add(x.p.id));
+	stale.forEach(x => uniqueIds.add(x.p.id));
+	const total = uniqueIds.size;
+
+	bell.textContent = total;
+	bell.className = 'bell-badge' + (total === 0 ? ' zero' : '');
+
+	if(!total){
 		panel.classList.remove('alert');
 		panel.classList.add('clear');
-		title.textContent = 'لا توجد مواعيد متأخرة أو قادمة';
+		title.textContent = 'لا توجد تذكيرات نشطة';
 		list.innerHTML =
 		'<div class="all-clear">' +
-        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-        'كل المشاريع تحت السيطرة — لا حاجة إلى إجراء الآن.' +
+			'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+			'كل المشاريع تحت السيطرة — لا حاجة إلى إجراء الآن.' +
 		'</div>';
 		return;
 	}
-	
+
 	panel.classList.remove('clear');
 	panel.classList.add('alert');
-	title.textContent = 'تذكيرات — ' + att.length + ' مشروع' + (att.length === 1 ? '' : 'ات') + ' تحتاج متابعة';
-	count.textContent = att.length;
-	
-	const act = isAdmin() ? 'edit' : 'progress';
-	const actLabel = isAdmin() ? 'تعديل' : 'تحديث';
-	
-	list.innerHTML = att.map(({p, d}) => {
-		const cls = d < 0 ? 'overdue' : 'soon';
-		const tag = d < 0
-		? 'متأخر ' + daysLabel(d)
-		: (d === 0 ? 'يستحق اليوم' : 'خلال ' + daysLabel(d));
-		const who = [p.entityName, p.responsible].filter(Boolean).join(' · ');
-		return '<div class="reminder-row ' + cls + '">' +
-		'<span class="reminder-name">' + esc(p.name) + '</span>' +
-		'<span class="reminder-meta">' + esc(who || '—') + '</span>' +
-		'<span class="reminder-tag">' + esc(tag) + '</span>' +
-		'<button class="btn btn-ghost btn-sm" data-act="' + act + '" data-id="' + p.id + '">' + actLabel + '</button>' +
+	title.textContent = 'تذكيرات — ' + total + ' مشروع' + (total === 1 ? '' : 'ات') + ' تحتاج متابعة';
+	count.textContent = total;
+
+	const editAct   = isAdmin() ? 'edit' : 'progress';
+	const editLabel = isAdmin() ? 'تعديل' : 'تحديث';
+
+	const clockIcon     = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+	const cameraOffIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+
+	let html = '';
+
+	if(due.length){
+		html += '<div class="reminder-section">' +
+			'<div class="reminder-section-head">' + clockIcon +
+				'<span>مواعيد قريبة أو متأخرة</span>' +
+				'<span class="reminder-section-count">' + due.length + '</span>' +
+			'</div>' +
+			due.map(({p, d}) => {
+				const cls = d < 0 ? 'overdue' : 'soon';
+				const tag = d < 0
+					? 'متأخر ' + daysLabel(d)
+					: (d === 0 ? 'يستحق اليوم' : 'خلال ' + daysLabel(d));
+				const who = [p.entityName, p.responsible].filter(Boolean).join(' · ');
+				return '<div class="reminder-row ' + cls + '">' +
+					'<span class="reminder-name">' + esc(p.name) + '</span>' +
+					'<span class="reminder-meta">' + esc(who || '—') + '</span>' +
+					'<span class="reminder-tag">' + esc(tag) + '</span>' +
+					'<button class="btn btn-ghost btn-sm" data-act="' + editAct + '" data-id="' + p.id + '">' + editLabel + '</button>' +
+					'</div>';
+			}).join('') +
 		'</div>';
-	}).join('');
+	}
+
+	if(stale.length){
+		html += '<div class="reminder-section">' +
+			'<div class="reminder-section-head">' + cameraOffIcon +
+				'<span>بدون زيارة منذ ' + NO_VISIT_DAYS + '+ يوم</span>' +
+				'<span class="reminder-section-count">' + stale.length + '</span>' +
+			'</div>' +
+			stale.map(({p, days}) => {
+				const neverVisited = !(p.visits && p.visits.length);
+				const tag = neverVisited
+					? 'لم تُسجَّل زيارات'
+					: 'آخر زيارة منذ ' + daysLabel(days);
+				const who = [p.entityName, p.responsible].filter(Boolean).join(' · ');
+				return '<div class="reminder-row stale">' +
+					'<span class="reminder-name">' + esc(p.name) + '</span>' +
+					'<span class="reminder-meta">' + esc(who || '—') + '</span>' +
+					'<span class="reminder-tag">' + esc(tag) + '</span>' +
+					'<button class="btn btn-ghost btn-sm" data-act="visits" data-id="' + p.id + '">زيارة</button>' +
+					'</div>';
+			}).join('') +
+		'</div>';
+	}
+
+	list.innerHTML = html;
 }
 /* ===================== الفلاتر الديناميكية ===================== */
 /* يبني قوائم المعتمدية والمقاولة من المشاريع الموجودة.
