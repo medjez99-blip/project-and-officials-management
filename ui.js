@@ -768,12 +768,14 @@ $('#projectForm').addEventListener('submit', e => {
 	const data = readForm();
 	if(!validate(data)) return;
 	const now = new Date().toISOString();
+	
+	const safeData = sanitizeData(data);   // 11.1.7 — future-proof if readForm() ever spreads user objects
 	if(editingId){
 		const i = projects.findIndex(p => p.id === editingId);
-		if(i > -1) projects[i] = Object.assign({}, projects[i], data, { updatedAt: now });
+		if(i > -1) projects[i] = Object.assign({}, projects[i], safeData, { updatedAt: now });
 		toast('تم تحديث المشروع','ok');
 		} else {
-		projects.unshift(Object.assign({ id: uid(), createdAt: now, updatedAt: now, visits: [] }, data));
+		projects.unshift(Object.assign({ id: uid(), createdAt: now, updatedAt: now, visits: [] }, safeData));
 		toast('تمت إضافة المشروع','ok');
 	}
 	closeModal();

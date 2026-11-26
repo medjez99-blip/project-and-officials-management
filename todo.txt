@@ -2,6 +2,7 @@
  TODO — متابعة مشاريع البنية التحتية
 ================================================================================
  STATUS: ✅ MIGRATION COMPLETE — 2026-11-10
+         ✅ SECURITY HARDENING v30 — 2026-11-24
  Working document. Update as you go.
  Format: [ ] to do  ·  [x] done  ·  [?] to consider  ·  [!] risk/blocker
 ================================================================================
@@ -27,10 +28,21 @@
    • Self-hosting Supabase
    • Multi-tenancy
    • SSO / OAuth providers
+   • Server-side contact email (deferred — see Phase 12.4 / §4)
+
  Recent additions (2026-11-13):
    • 4 administrative columns added to the projects table view and data model.
    • 4 filter selects added; search extended to cover them.
    • sw.js bumped v27 → v28.
+
+ Recent additions (2026-11-24):
+   • Three front-end security guards shipped (§11.1.2, §11.1.3, §11.1.7):
+       – BiDi control chars stripped inside esc()       (core.js)
+       – CSV formula-injection guard in #btnCsv export  (app.js)
+       – sanitizeData() prototype-pollution guard       (core.js + ui.js + app.js)
+   • contact.html mailto: form removed → replaced by «قريباً» badge.
+   • sw.js bumped v29 → v30.
+   • OPERATIONS.md updated (§4.5, §4.7, §6, §9, §10, §11).
 
 
 ================================================================================
@@ -152,6 +164,90 @@
  [x] Created OPERATIONS.md (full handoff document).
  [x] sw.js bumped to v25.
 
+────────────────────────────────────────────────────────────────────────────────
+ PHASE 11 — Reminder semantics rework (post-migration UI)          ✅ DONE
+────────────────────────────────────────────────────────────────────────────────
+ Not a Supabase concern — pure client-side logic change in ui.js + main.css.
+ Shipped in sw.js v29.
+
+ [x] Two reminder kinds replace the single "near end date" rule:
+       1) "near end of date" — endDate ≤ 7 days away, or overdue.
+       2) "no visit for 21+ days" — last visit (or createdAt if never
+          visited) ≥ 21 days ago.
+ [x] New helpers in ui.js: lastActivityTimestamp(), daysSinceActivity(),
+     reminderBuckets() → { due, stale }.
+ [x] renderReminders() renders two independent sub-sections, each with
+     its own header + count.
+ [x] Bell badge + panel title count UNIQUE projects (a project may appear
+     in both sections if it satisfies both kinds).
+ [x] New stat card "بدون زيارة" in renderStats().
+ [x] Table "reminder" column now shows the more urgent kind per project:
+     overdue → stale → soon → normal.
+ [x] Stale rows in the panel expose a "زيارة" button → opens the visits
+     modal (data-act="visits"), so users without edit rights can still
+     record a visit to reset the clock.
+ [x] Editing a project (updatedAt) does NOT reset the 21-day clock —
+     only a real visit does. Intentional: matches the wording literally.
+ [x] Thresholds are constants at the top of the reminder block:
+     NEAR_DUE_DAYS = 7, NO_VISIT_DAYS = 21.
+ [x] attentionList() kept as a back-compat unique-union helper so the
+     #btnRemind handler and any external snippet keep working.
+ [x] sw.js VERSION bumped to v29.
+
+────────────────────────────────────────────────────────────────────────────────
+ PHASE 12 — Front-end security hardening (v30)                     ✅ DONE
+────────────────────────────────────────────────────────────────────────────────
+ Checklist items from the security review (§11.1.2, §11.1.3, §11.1.7).
+ Shipped in sw.js v30. Documented in OPERATIONS.md §4.7.
+
+ 12.1 BiDi control-char stripping in esc() — core.js            ✅ DONE
+ [x] Added BIDI_RE = /[\u202A-\u202E\u2066-\u2069]/g.
+ [x] esc() now strips BiDi chars BEFORE HTML-encoding.
+ [x] Every render path already flows through esc() → whole-UI coverage:
+     project names, responsible, notes, entityName, contractor fields,
+     visit notes, usernames.
+ [x] Non-destructive: data stored in localStorage / jsonb is untouched;
+     stripping happens at render only.
+
+ 12.2 CSV formula-injection guard — app.js                       ✅ DONE
+ [x] Added csvSafe(v) — prefixes `'` when a cell starts with
+     = + - @ TAB or CR.
+ [x] Applied inside #btnCsv map to every cell before quoting.
+ [x] Known side-effect (intentional): phone numbers like `+216 …`
+     export as `'+216 …`; displays correctly in Excel. Import path
+     (#fileImport) reads JSON, so no round-trip risk.
+
+ 12.3 Prototype-pollution guard — core.js / ui.js / app.js        ✅ DONE
+ [x] Added sanitizeData(input, seen) — deep clone that drops own keys
+     __proto__, constructor, prototype; handles arrays and cycles.
+ [x] Applied in pullFromSupabase() on row.data before merge.
+ [x] Applied in #projectForm submit (ui.js) before Object.assign.
+ [x] Applied in #fileImport map (app.js) before Object.assign(blank(), …).
+ [x] Why not structuredClone: it preserves own __proto__ as an own key,
+     so Object.assign still triggers the inherited setter. Explicit key
+     drop is what closes the hole.
+
+ 12.4 Contact form — mailto: removed                              ✅ DONE
+ [x] Removed <form id="contactForm"> from contact.html.
+ [x] Removed mailto: submit handler from contact.html <script>.
+ [x] Replaced with .contact-coming-soon badge + explanation.
+ [x] Why: mailto: only opens the local mail client (no server send),
+     fails silently on iOS PWA / machines without a mail handler, and
+     showed a false "✓ success" toast regardless of outcome.
+ [x] Contact channels (email link, tel:, address, admin note) still work.
+ [?] Server-side send deferred — see §4 future features (contact-send).
+
+ 12.5 Version + docs                                              ✅ DONE
+ [x] sw.js VERSION bumped v29 → v30.
+ [x] OPERATIONS.md updated:
+       §0  SW version v28 → v30
+       §4.5 file map — added contact.html / terms.html / privacy.html
+       §4.7 NEW section — the three guards + contact-form note
+       §6  new troubleshooting row (contact form)
+       §9  security model — pointer to §4.7
+       §10 version log — v30 row
+       §11 checklist — v30 + security spot-checks
+
 
 ================================================================================
  2. TABLE SCHEMA (as deployed)
@@ -205,10 +301,19 @@
        ✓ Photos (recent): available via local IndexedDB.
        ✗ Photos (fresh device): require network for signed URL.
        ✗ User roster: cached from last fetch, refresh on focus.
+       ✗ Contact page: not precached by sw.js — navigations fall back to
+         index.html offline. Add to PRECACHE if offline contact becomes
+         a requirement.
 
  [?] Delete semantics:
        Hard delete everywhere. Tombstones in localStorage ensure the delete
        reaches Supabase eventually. No soft-delete / trash period.
+
+ [?] Reminder thresholds:
+       NEAR_DUE_DAYS = 7 and NO_VISIT_DAYS = 21 are hardcoded constants in
+       ui.js. If different projects need different thresholds (e.g. a
+       school vs. a directorate), promote them to project fields later.
+       For now: one policy for all projects.
 
  [?] Session refresh:
        Supabase-js auto-refreshes tokens. onAuthStateChange keeps currentUser
@@ -217,6 +322,16 @@
  [?] Service worker vs Supabase:
        sw.js bypasses supabase.co — API responses are not cached.
        The app's local-first layer handles offline state for those.
+
+ [?] Security guards scope (v30):
+       • BiDi strip is at render only → stored data intact but every new
+         display path MUST go through esc() to benefit. Any raw innerHTML
+         added later would bypass it.
+       • CSV guard covers #btnCsv only. If more export formats are added
+         (PDF, Excel, flattened CSV), route them through csvSafe() too.
+       • sanitizeData() is applied at the three external entry points.
+         Any NEW ingestion path (new import format, new pull source)
+         must call it before merging into `projects`.
 
 
 ================================================================================
@@ -230,6 +345,23 @@
  [ ] Diagnostics modal (admin only): sync queue depth, last sync time per
      entity, failed attempts + retry button, session expiry, SW version,
      Supabase reachability.
+
+── Contact / email ─────────────────────────────────────────────────────────────
+ [ ] contact-send Edge Function (replaces the disabled mailto: form):
+       – POST body: { name, email, subject, message, honeypot }
+       – validates + rate-limits per IP
+       – sends via Resend (or SMTP via denomailer)
+       – from: no-reply@…  ·  to: real ministry address  ·  reply_to: user
+       – returns { ok: true } only on provider success
+ [ ] Frontend: <form> + fetch() to the function; show real success/error
+     from the response (no fake "✓").
+ [ ] Add contact.html to sw.js PRECACHE once the send path is live.
+ [ ] Fix placeholder values in contact.html before launch:
+       contact@ministry.gov → real address (likely @education.gov.tn)
+       +212 5 00 00 00 00 → real Tunisian +216 number
+       "وزارة التربية والتعليم — الرباط" → Tunis address
+ [ ] Transactional email reuse: same provider can power password reset
+     reminders, new-assignment notices, etc.
 
 ── Push notifications ──────────────────────────────────────────────────────────
  [ ] Web Push API + a small Edge Function to fan-out.
@@ -246,9 +378,17 @@
 ── Security ───────────────────────────────────────────────────────────────────
  [ ] Two-factor authentication (TOTP) — Supabase supports it.
  [ ] Audit log table: who did what, when (admin actions especially).
- [ ] Rate limiting on Edge Functions (admin create-user, reset-password).
+ [ ] Rate limiting on Edge Functions (admin create-user, reset-password,
+     and contact-send when it exists).
  [ ] Session timeout policy (currently 30 days — maybe shorter for admins).
  [ ] Password policy: min length 10, no reuse — enforced at Edge Function.
+ [ ] Content-Security-Policy header in netlify.toml (already drafted and
+     commented out — enable after testing in console).
+ [ ] Keep SECURITY.txt out of the repo / not served at /.well-known/
+     (5-min check from §11.8.9 of the security review).
+ [?] Verify bucket file-size limit is set in dashboard (not "unlimited").
+ [?] Confirm Supabase API/Auth/Storage logs retention matches needs
+     (free tier = 1 day).
 
 ── UX / polish ────────────────────────────────────────────────────────────────
  [ ] Search across visits (currently project-level only).
@@ -306,6 +446,28 @@
      markDeletedLocally() is synchronous (localStorage). Even a mid-reload
      delete leaves a tombstone. pullFromSupabase honors tombstones.
 
+ [x] BiDi spoofing in rendered text — RESOLVED (v30).
+     esc() strips U+202A–U+202E and U+2066–U+2069 before HTML encoding.
+     Covers every UI display path that already calls esc().
+
+ [x] CSV formula injection on export — RESOLVED (v30).
+     csvSafe() prefixes `'` on cells starting with = + - @ TAB CR.
+
+ [x] Prototype pollution via jsonb / imported JSON — RESOLVED (v30).
+     sanitizeData() drops __proto__ / constructor / prototype at the three
+     external merge sites (pullFromSupabase, #projectForm, #fileImport).
+
+ [?] Security-review items still open:
+       §11.1.7 originally listed 3 sites; we patched those. load() reads
+       localStorage (same-origin) — a prior build that wrote poisoned data
+       would survive until first save(). Optional hardening: call
+       sanitizeData() inside normalizeProject(). Cost: one deep clone
+       per project at boot (~few ms for 60 projects). Decision deferred.
+
+ [?] Contact form is now visibly "coming soon" to users.
+     Acceptable for the small internal audience. External/public exposure
+     should wait for the contact-send Edge Function.
+
 
 ================================================================================
  6. QUICK REFERENCE
@@ -318,13 +480,15 @@
  Docs: Edge Functions ......... https://supabase.com/docs/guides/functions
  Docs: Realtime ............... https://supabase.com/docs/guides/realtime
 
- Current app state (as of 2026-11-13):
+ Current app state (as of 2026-11-24):
    • Supabase Auth (email/password, no public signup)
    • Local-first storage (localStorage + IndexedDB) + background sync
-   • PWA with sw.js v28
+   • PWA with sw.js v30
    • Admin-only user creation via Edge Function
    • Photo upload to private storage with signed-URL fallback
    • RLS enforced on all tables + storage
+   • Two-kind reminders: near-due (≤7d) + no-visit (≥21d), thresholds
+     NEAR_DUE_DAYS / NO_VISIT_DAYS in ui.js
    • Tombstones + diff-based sync queue + last-write-wins merge
    • Deprecated auth stubs removed from core.js
    • localStorage keys frozen — will never be bumped again
@@ -341,6 +505,12 @@
        نوعية التدخل (static)
        مرحلة الإنجاز (static)
        المقاولة (dynamic by contractorName)
+   • Front-end security guards (v30):
+       BiDi strip in esc()                    — core.js
+       csvSafe() in #btnCsv                   — app.js
+       sanitizeData() at 3 merge sites        — core.js + ui.js + app.js
+   • contact.html: mailto: form removed → «قريباً» badge (see Phase 12.4)
+   • Public pages: terms.html, privacy.html, contact.html (all noindex)
 
  Handoff document: OPERATIONS.md
 

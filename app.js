@@ -119,8 +119,15 @@ $('#btnCsv').addEventListener('click', () => {
   'status','priority','startDate','endDate','progress','notes'
 ];
   const head = cols.join(',');
+    // CSV formula-injection guard (OWASP): prefix a single quote when a cell
+  // starts with = + - @ TAB or CR, so Excel/Sheets treat it as text instead
+  // of evaluating it (e.g. =cmd|' /C calc'!A0 → DDE → account takeover).
+  const csvSafe = v => {
+    const s = String(v);
+    return s.replace(/^([=+\-@\t\r])/, "'$1");
+  };
   const rows = projects.map(p => cols.map(c => {
-    const v = p[c] == null ? '' : String(p[c]);
+    const v = p[c] == null ? '' : csvSafe(p[c]);
     return '"' + v.replace(/"/g,'""') + '"';
   }).join(','));
   download('projects-' + todayISO() + '.csv', '\ufeff' + head + '\n' + rows.join('\n'), 'text/csv;charset=utf-8');
@@ -141,9 +148,16 @@ $('#fileImport').addEventListener('change', e => {
     try{
       const arr = JSON.parse(reader.result);
       if(!Array.isArray(arr)) throw new Error('الملف يجب أن يحتوي على مصفوفة JSON');
-      const clean = arr
+       const clean = arr
         .filter(x => x && typeof x.name === 'string' && x.name.trim())
-        .map(x => Object.assign(blank(), x, { id: x.id || uid(), visits: Array.isArray(x.visits) ? x.visits : [] }));
+        .map(x => {
+          // 11.1.7 — sanitize the whole tree (including nested visits / locations)
+          const s = sanitizeData(x);
+          return Object.assign(blank(), s, {
+            id:     s.id || uid(),
+            visits: Array.isArray(s.visits) ? s.visits : []
+          });
+        });
       if(!clean.length) throw new Error('لا توجد مشاريع صالحة في الملف');
       const ok = await confirmDialog({
         title: 'استيراد البيانات',

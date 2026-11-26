@@ -33,7 +33,13 @@ const uid = () => 'p_' + Date.now().toString(36) + Math.random().toString(36).sl
 const userUid = () => 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const visitUid = () => 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const photoUid = () => 'ph_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Strip Unicode BiDi control chars (U+202A–U+202E, U+2066–U+2069) before escaping.
+   These can reverse/hide text in rendered output (e.g. a contractor name that
+   displays backwards or conceals characters). Stripping them here hardens every
+   text path that passes through esc() — project fields, notes, visit notes,
+   usernames, contractor data, etc. */
+const BIDI_RE = /[\u202A-\u202E\u2066-\u2069]/g;
+const esc = v => String(v ?? '').replace(BIDI_RE, '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const STATUS_AR = {planned:'مخطط',active:'نشط',onhold:'معلّق',completed:'مكتمل',cancelled:'ملغى'};
 const PRIORITY_AR = {critical:'حرج',high:'عالي',medium:'متوسط',low:'منخفض'};
@@ -66,6 +72,29 @@ const isoLocal = d => d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(
 const todayISO = () => isoLocal(new Date());
 function shiftISO(days){ const d = new Date(); d.setDate(d.getDate()+days); return isoLocal(d); }
 
+/* Strip prototype-pollution keys from any external object/array tree.
+   JSON.parse (and JSONB) can carry "__proto__", "constructor", or "prototype"
+   as OWN enumerable keys — Object.assign then triggers the inherited __proto__
+   setter and swaps the target's prototype. This returns a deep-cleaned copy
+   so merge sites never see those keys. Handles arrays and cycles defensively. */
+function sanitizeData(input, seen){
+  seen = seen || new WeakMap();
+  if(input === null || typeof input !== 'object') return input;
+  if(seen.has(input)) return seen.get(input);
+  if(Array.isArray(input)){
+    const out = [];
+    seen.set(input, out);
+    for(const v of input) out.push(sanitizeData(v, seen));
+    return out;
+  }
+  const out = {};
+  seen.set(input, out);
+  for(const k of Object.keys(input)){                 // own enumerable only
+    if(k === '__proto__' || k === 'constructor' || k === 'prototype') continue;
+    out[k] = sanitizeData(input[k], seen);
+  }
+  return out;
+}
 function fmtDate(iso){
 	if(!iso) return '—';
 	const d = new Date(iso + 'T00:00:00');
@@ -499,10 +528,10 @@ async function pullFromSupabase(){
 	let pulled = 0, conflicts = 0;
 	
 	for(const row of remote){
-		const remoteProj = Object.assign({}, row.data, {
-			id: row.id,
-			updatedAt: row.updated_at
-		});
+		// 11.1.7 — sanitize JSONB before merge (strips __proto__ / constructor / prototype)
+		const remoteProj = sanitizeData(row.data);
+		remoteProj.id        = row.id;
+		remoteProj.updatedAt = row.updated_at;
 		const localProj = localMap.get(row.id);
 		// Skip projects deleted locally but not yet flushed
 		if(deletedIds.has(row.id)){

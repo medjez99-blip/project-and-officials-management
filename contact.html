@@ -1,222 +1,277 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>اتصل بنا — وزارة التربية والتعليم</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="main.css">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
-  <meta name="theme-color" content="#0B2A44">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="اتصل بنا — بوابة إدارة المشاريع والمسؤولين، وزارة التربية والتعليم">
-  <style>
-    .legal-wrap{max-width:920px;margin:0 auto;padding:24px 0}
-    .page-hero{text-align:center;padding:20px 0 26px}
-    .page-hero h1{font-size:28px;font-weight:800;color:var(--ink);margin-bottom:8px}
-    .page-hero p{color:var(--muted);font-size:14.5px;max-width:640px;margin:0 auto;line-height:1.85}
-    .legal-content{padding:32px 40px;line-height:1.95;font-size:14.5px;color:var(--ink-2)}
-    .legal-content h2{font-size:18px;font-weight:800;color:var(--ink);margin:26px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--gold);display:inline-block}
-    .legal-content h2:first-of-type{margin-top:0}
-    .legal-content p{margin:0 0 14px}
-    .legal-content strong{color:var(--ink);font-weight:700}
-
-    .contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0 28px}
-    .contact-item{display:flex;align-items:flex-start;gap:12px;padding:16px;background:#F8FAFC;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit;transition:all .15s ease}
-    .contact-item:hover{background:#fff;border-color:var(--primary-2);box-shadow:0 4px 12px rgba(20,80,122,.1);transform:translateY(-1px)}
-    .contact-item svg{flex-shrink:0;color:var(--primary-2);margin-top:2px}
-    .contact-item div{display:flex;flex-direction:column;gap:3px;min-width:0}
-    .contact-item strong{font-size:12.5px;color:var(--muted);font-weight:700;letter-spacing:.3px}
-    .contact-item span{font-size:13.5px;color:var(--ink);word-break:break-word;font-weight:600}
-
-    .contact-form{margin-top:8px;display:flex;flex-direction:column;gap:16px}
-    .contact-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media(max-width:600px){.contact-form .form-grid{grid-template-columns:1fr}}
-    .contact-form .field.full{grid-column:1/-1}
-    .contact-form .btn{align-self:flex-start;margin-top:4px}
-
-    .contact-note{background:#F0F7FF;border:1px solid #C9DFF0;border-radius:10px;padding:12px 16px;margin-top:22px;font-size:13px;color:var(--primary);display:flex;gap:10px;align-items:flex-start;line-height:1.7}
-    .contact-note svg{flex-shrink:0;margin-top:2px}
-
-    @media(max-width:640px){
-      .legal-wrap{padding:14px 0}
-      .legal-content{padding:22px 20px;font-size:14px}
-      .page-hero{padding:12px 0 20px}
-      .page-hero h1{font-size:22px}
-      .page-hero p{font-size:13.5px}
-      .legal-content h2{font-size:16px}
-    }
-  </style>
-</head>
-<body>
-
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="brand-mark">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10L12 5 2 10l10 5 10-5z"/>
-            <path d="M6 12v5c3 2 9 2 12 0v-5"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>وزارة التربية والتعليم</h1>
-          <p>إدارة المشاريع والمسؤولين</p>
-        </div>
-      </div>
-      <div class="topbar-actions">
-        <a class="btn btn-light" href="index.html">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          العودة إلى التطبيق
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <div class="legal-wrap">
-      <div class="page-hero">
-        <h1>اتصل بنا</h1>
-        <p>لأي استفسار، اقتراح، أو مشكلة تقنية — نحن هنا لمساعدتك.</p>
-      </div>
-
-      <div class="card legal-content">
-
-        <h2>قنوات التواصل</h2>
-        <div class="contact-grid">
-          <a href="mailto:contact@ministry.gov" class="contact-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 4h16v16H4z"/><polyline points="4 6 12 13 20 6"/>
-            </svg>
-            <div>
-              <strong>البريد الإلكتروني</strong>
-              <span dir="ltr">contact@ministry.gov</span>
-            </div>
-          </a>
-
-          <a href="tel:+212500000000" class="contact-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
-            </svg>
-            <div>
-              <strong>الهاتف</strong>
-              <span dir="ltr">+212 5 00 00 00 00</span>
-            </div>
-          </a>
-
-          <div class="contact-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-            </svg>
-            <div>
-              <strong>العنوان</strong>
-              <span>وزارة التربية والتعليم — الرباط</span>
-            </div>
-          </div>
-        </div>
-
-        <h2>أو أرسل لنا رسالة</h2>
-        <p>املأ النموذج أدناه وسيُفتح تطبيق البريد الإلكتروني لديك مع الرسالة جاهزة للإرسال.</p>
-
-        <form class="contact-form" id="contactForm">
-          <div class="form-grid">
-            <div class="field">
-              <label for="cName">الاسم الكامل <span class="req">*</span></label>
-              <input type="text" id="cName" required maxlength="80" placeholder="اسمك الكامل" autocomplete="name">
-            </div>
-            <div class="field">
-              <label for="cEmail">البريد الإلكتروني <span class="req">*</span></label>
-              <input type="email" id="cEmail" required maxlength="120" placeholder="name@ministry.gov" dir="ltr" autocomplete="email">
-            </div>
-            <div class="field full">
-              <label for="cSubject">الموضوع <span class="req">*</span></label>
-              <input type="text" id="cSubject" required maxlength="140" placeholder="مثال: مشكلة تقنية / اقتراح / استفسار">
-            </div>
-            <div class="field full">
-              <label for="cMessage">الرسالة <span class="req">*</span></label>
-              <textarea id="cMessage" rows="6" required maxlength="2000" placeholder="اكتب رسالتك هنا…"></textarea>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-            إرسال الرسالة
-          </button>
-        </form>
-
-        <div class="contact-note">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <span>يفضّل التواصل مباشرة مع مدير النظام للحصول على حساب أو لإعادة تعيين كلمة المرور.</span>
-        </div>
-
-      </div>
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-col">
-        <h3 class="footer-heading">روابط</h3>
-        <ul class="footer-links">
-          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><a href="terms.html">شروط الاستخدام</a></li>
-          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><a href="privacy.html">سياسة الخصوصية</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h3 class="footer-heading">تطوير واستضافة</h3>
-        <ul class="footer-links">
-          <li>تطوير: <strong>زياد الماجري</strong> <span class="ltr">(Mejri Ziad)</span></li>
-          <li>استضافة: <span class="ltr">Netlify</span></li>
-          <li>قاعدة البيانات: <span class="ltr">Supabase</span></li>
-          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><polyline points="4 6 12 13 20 6"/></svg><a href="contact.html">اتصل بنا</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h3 class="footer-heading">الإصدار</h3>
-        <span class="version-badge" dir="ltr">v0.1.9a</span>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      © <span id="footerYear">2026</span> وزارة التربية والتعليم — جميع الحقوق محفوظة
-    </div>
-  </footer>
-
-  <script>
-    // Année dynamique du footer
-    const y = document.getElementById('footerYear');
-    if (y) y.textContent = new Date().getFullYear();
-
-    // Formulaire de contact → mailto:
-    const form = document.getElementById('contactForm');
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const name    = document.getElementById('cName').value.trim();
-      const email   = document.getElementById('cEmail').value.trim();
-      const subject = document.getElementById('cSubject').value.trim();
-      const message = document.getElementById('cMessage').value.trim();
-
-      if (!name || !email || !subject || !message) {
-        alert('يرجى ملء جميع الحقول المطلوبة.');
-        return;
-      }
-
-      const body = `الاسم: ${name}\r\nالبريد الإلكتروني: ${email}\r\n\r\n${message}`;
-      const mailto = `mailto:contact@ministry.gov?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailto;
-
-      // Feedback visuel
-      const btn = form.querySelector('button[type="submit"]');
-      const original = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '✓ تم فتح تطبيق البريد الإلكتروني';
-      setTimeout(() => { btn.disabled = false; btn.innerHTML = original; }, 3200);
-    });
-  </script>
-</body>
-</html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>اتصل بنا — متابعة مشاريع البنية التحتية</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="main.css">
+		<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+		<meta name="theme-color" content="#0B2A44">
+		<meta name="robots" content="noindex, nofollow">
+		<meta name="description" content="اتصل بنا — بوابة إدارة المشاريع والمسؤولين، متابعة مشاريع البنية التحتية">
+		<style>
+			.legal-wrap{max-width:920px;margin:0 auto;padding:24px 0}
+			.page-hero{text-align:center;padding:20px 0 26px}
+			.page-hero h1{font-size:28px;font-weight:800;color:var(--ink);margin-bottom:8px}
+			.page-hero p{color:var(--muted);font-size:14.5px;max-width:640px;margin:0 auto;line-height:1.85}
+			.legal-content{padding:32px 40px;line-height:1.95;font-size:14.5px;color:var(--ink-2)}
+			.legal-content h2{font-size:18px;font-weight:800;color:var(--ink);margin:26px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--gold);display:inline-block}
+			.legal-content h2:first-of-type{margin-top:0}
+			.legal-content p{margin:0 0 14px}
+			.legal-content strong{color:var(--ink);font-weight:700}
+			
+			.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0 28px}
+			.contact-item{display:flex;align-items:flex-start;gap:12px;padding:16px;background:#F8FAFC;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit;transition:all .15s ease}
+			.contact-item:hover{background:#fff;border-color:var(--primary-2);box-shadow:0 4px 12px rgba(20,80,122,.1);transform:translateY(-1px)}
+			.contact-item svg{flex-shrink:0;color:var(--primary-2);margin-top:2px}
+			.contact-item div{display:flex;flex-direction:column;gap:3px;min-width:0}
+			.contact-item strong{font-size:12.5px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+			.contact-item span{font-size:13.5px;color:var(--ink);word-break:break-word;font-weight:600}
+			
+			.contact-form{margin-top:8px;display:flex;flex-direction:column;gap:16px}
+			.contact-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+			@media(max-width:600px){.contact-form .form-grid{grid-template-columns:1fr}}
+			.contact-form .field.full{grid-column:1/-1}
+			.contact-form .btn{align-self:flex-start;margin-top:4px}
+			
+			.contact-note{background:#F0F7FF;border:1px solid #C9DFF0;border-radius:10px;padding:12px 16px;margin-top:22px;font-size:13px;color:var(--primary);display:flex;gap:10px;align-items:flex-start;line-height:1.7}
+			.contact-note svg{flex-shrink:0;margin-top:2px}
+			/* ── Contact form — coming soon ── */
+.contact-coming-soon{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  padding:28px 24px;
+  margin-top:8px;
+  background:#F8FAFC;
+  border:1.5px dashed var(--line);
+  border-radius:12px;
+  text-align:center;
+}
+.coming-soon-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 14px;
+  background:var(--gold);
+  color:#0B2A44;
+  font-size:12.5px;
+  font-weight:800;
+  letter-spacing:.3px;
+  border-radius:999px;
+}
+.coming-soon-text{
+  margin:0;
+  font-size:13.5px;
+  color:var(--muted);
+  line-height:1.8;
+  max-width:460px;
+}
+			@media(max-width:640px){
+			.legal-wrap{padding:14px 0}
+			.legal-content{padding:22px 20px;font-size:14px}
+			.page-hero{padding:12px 0 20px}
+			.page-hero h1{font-size:22px}
+			.page-hero p{font-size:13.5px}
+			.legal-content h2{font-size:16px}
+			}
+		</style>
+	</head>
+	<body>
+		
+		<header class="topbar">
+			<div class="topbar-inner">
+				<div class="brand">
+					<div class="brand-mark">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M22 10L12 5 2 10l10 5 10-5z"/>
+							<path d="M6 12v5c3 2 9 2 12 0v-5"/>
+						</svg>
+					</div>
+					<div class="brand-text">
+						<h1>الجمهورية التونسية</h1>
+						<p>وزارة التربية</p>
+						<p>المندوبية الجهوية للتربية بباجة</p>
+					</div>
+				</div>
+				
+				<div class="topbar-title">
+					<h2>متابعة مشاريع البنية التحتية</h2>
+				</div>
+				<div class="topbar-actions">
+					<a class="btn btn-light" href="index.html">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+						العودة إلى التطبيق
+					</a>
+				</div>
+			</div>
+		</header>
+		
+		<main>
+			<div class="legal-wrap">
+				<div class="page-hero">
+					<h1>اتصل بنا</h1>
+					<p>لأي استفسار، اقتراح، أو مشكلة تقنية — نحن هنا لمساعدتك.</p>
+				</div>
+				
+				<div class="card legal-content">
+					
+					<h2>قنوات التواصل</h2>
+					<div class="contact-grid">
+						<a href="mailto:contact@ministry.gov" class="contact-item">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M4 4h16v16H4z"/><polyline points="4 6 12 13 20 6"/>
+							</svg>
+							<div>
+								<strong>البريد الإلكتروني</strong>
+								<span dir="ltr">medjez99@gmail.com</span>
+							</div>
+						</a>
+						
+						<a href="tel:+212500000000" class="contact-item">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+							</svg>
+							<div>
+								<strong>الهاتف</strong>
+								<span dir="ltr">+216 26 021 287</span>
+							</div>
+						</a>
+						
+						<div class="contact-item">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+							</svg>
+							<div>
+								<strong>العنوان</strong>
+								<span>متابعة مشاريع البنية التحتية — الجمهورية التونسية</span>
+							</div>
+						</div>
+					</div>
+					
+					<!-- <h2>أو أرسل لنا رسالة</h2>
+						<p>املأ النموذج أدناه وسيُفتح تطبيق البريد الإلكتروني لديك مع الرسالة جاهزة للإرسال.</p>
+						
+						<form class="contact-form" id="contactForm">
+						<div class="form-grid">
+						<div class="field">
+						<label for="cName">الاسم الكامل <span class="req">*</span></label>
+						<input type="text" id="cName" required maxlength="80" placeholder="اسمك الكامل" autocomplete="name">
+						</div>
+						<div class="field">
+						<label for="cEmail">البريد الإلكتروني <span class="req">*</span></label>
+						<input type="email" id="cEmail" required maxlength="120" placeholder="name@ministry.gov" dir="ltr" autocomplete="email">
+						</div>
+						<div class="field full">
+						<label for="cSubject">الموضوع <span class="req">*</span></label>
+						<input type="text" id="cSubject" required maxlength="140" placeholder="مثال: مشكلة تقنية / اقتراح / استفسار">
+						</div>
+						<div class="field full">
+						<label for="cMessage">الرسالة <span class="req">*</span></label>
+						<textarea id="cMessage" rows="6" required maxlength="2000" placeholder="اكتب رسالتك هنا…"></textarea>
+						</div>
+						</div>
+						<button type="submit" class="btn btn-primary">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="22" y1="2" x2="11" y2="13"/>
+						<polygon points="22 2 15 22 11 13 2 9 22 2"/>
+						</svg>
+						إرسال الرسالة
+						</button>
+					</form> -->
+					<h2>أو أرسل لنا رسالة</h2>
+					<p>نموذج المراسلة المباشر قيد التطوير حالياً. في الوقت الحالي، يرجى استخدام قنوات التواصل أعلاه.</p>
+					
+					<div class="contact-coming-soon">
+						<div class="coming-soon-badge">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+							</svg>
+							قريباً
+						</div>
+						<p class="coming-soon-text">
+							نعمل على إتاحة إرسال الرسائل مباشرة من هذه الصفحة دون الحاجة إلى فتح تطبيق البريد.
+						</p>
+					</div>
+					<div class="contact-note">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+						</svg>
+						<span>يفضّل التواصل مباشرة مع مدير النظام للحصول على حساب أو لإعادة تعيين كلمة المرور.</span>
+					</div>
+					
+				</div>
+			</div>
+		</main>
+		
+		<footer class="site-footer">
+			<div class="footer-inner">
+				<div class="footer-col">
+					<h3 class="footer-heading">روابط</h3>
+					<ul class="footer-links">
+						<li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><a href="terms.html">شروط الاستخدام</a></li>
+						<li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><a href="privacy.html">سياسة الخصوصية</a></li>
+					</ul>
+				</div>
+				<div class="footer-col">
+					<h3 class="footer-heading">تطوير واستضافة</h3>
+					<ul class="footer-links">
+						<li>تطوير: <strong>زياد الماجري</strong> <span class="ltr">(Mejri Ziad)</span></li>
+						<li>استضافة: <span class="ltr">Netlify</span></li>
+						<li>قاعدة البيانات: <span class="ltr">Supabase</span></li>
+						<li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><polyline points="4 6 12 13 20 6"/></svg><a href="contact.html">اتصل بنا</a></li>
+					</ul>
+				</div>
+				<div class="footer-col">
+					<h3 class="footer-heading">الإصدار</h3>
+					<span class="version-badge" dir="ltr">v0.1.9a</span>
+				</div>
+			</div>
+			<div class="footer-bottom">
+				© <span id="footerYear">2026</span> متابعة مشاريع البنية التحتية — جميع الحقوق محفوظة
+			</div>
+		</footer>
+		
+		<script>
+			// Année dynamique du footer
+			const y = document.getElementById('footerYear');
+			if (y) y.textContent = new Date().getFullYear();
+			
+			// Formulaire de contact — désactivé (remplacé par un badge « قريباً »)
+			// Le formulaire mailto: a été retiré car :
+			//   · il n'envoyait rien (ouvrait juste le client mail local),
+			//   · il ne fonctionnait pas sur PWA iOS / machines sans client mail,
+			//   · il affichait un faux « ✓ » de succès dans tous les cas.
+			// La version serveur (Supabase Edge Function + Resend) arrive prochainement.
+			// Formulaire de contact → mailto:
+			// const form = document.getElementById('contactForm');
+			// form.addEventListener('submit', e => {
+			// 	e.preventDefault();
+			// 	const name    = document.getElementById('cName').value.trim();
+			// 	const email   = document.getElementById('cEmail').value.trim();
+			// 	const subject = document.getElementById('cSubject').value.trim();
+			// 	const message = document.getElementById('cMessage').value.trim();
+			// 	
+			// 	if (!name || !email || !subject || !message) {
+			// 		alert('يرجى ملء جميع الحقول المطلوبة.');
+			// 		return;
+			// 	}
+			// 	
+			// 	const body = `الاسم: ${name}\r\nالبريد الإلكتروني: ${email}\r\n\r\n${message}`;
+			// 	const mailto = `mailto:contact@ministry.gov?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+			// 	window.location.href = mailto;
+			// 	
+			// 	// Feedback visuel
+			// 	const btn = form.querySelector('button[type="submit"]');
+			// 	const original = btn.innerHTML;
+			// 	btn.disabled = true;
+			// 	btn.innerHTML = '✓ تم فتح تطبيق البريد الإلكتروني';
+			// 	setTimeout(() => { btn.disabled = false; btn.innerHTML = original; }, 3200);
+			// });
+		</script>
+	</body>
+</html>	
