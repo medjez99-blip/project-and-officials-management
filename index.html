@@ -724,9 +724,55 @@
 		</script>
 		<script>
 			if ('serviceWorker' in navigator) {
+				const hadController = !!navigator.serviceWorker.controller;
+				let reloading = false;
+
+				navigator.serviceWorker.addEventListener('controllerchange', () => {
+					if (!hadController) return;      /* first install — never reload */
+					if (reloading) return;           /* guard against reload loop */
+					reloading = true;
+					window.location.reload();
+				});
+
+				window.showSwUpdateToast = function (reg) {
+					if (document.querySelector('#swUpdateBanner')) return;   /* no duplicates */
+					const el = document.createElement('div');
+					el.id = 'swUpdateBanner';
+					el.style.cssText =
+						'position:fixed;bottom:22px;left:50%;transform:translateX(-50%);' +
+						'background:#0B2A44;color:#fff;padding:12px 16px;border-radius:12px;' +
+						'display:flex;align-items:center;gap:12px;' +
+						'box-shadow:0 14px 34px -8px rgba(15,31,51,.4);' +
+						'z-index:700;font-family:inherit;font-size:13.5px;font-weight:600;' +
+						'max-width:92vw;border:2px solid #E8B84B';
+					el.innerHTML =
+						'<span>يتوفر تحديث جديد للتطبيق.</span>' +
+						'<button type="button" id="swUpdateBtn" style="background:#E8B84B;color:#1A1305;border:none;padding:7px 14px;border-radius:8px;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">تحديث الآن</button>' +
+						'<button type="button" id="swDismissBtn" style="background:transparent;color:#E8EEF6;border:1px solid rgba(255,255,255,.3);padding:7px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">لاحقاً</button>';
+					document.body.appendChild(el);
+
+					el.querySelector('#swUpdateBtn').addEventListener('click', () => {
+						if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+						el.remove();
+					});
+					el.querySelector('#swDismissBtn').addEventListener('click', () => el.remove());
+				};
+
 				window.addEventListener('load', () => {
 					navigator.serviceWorker.register('/sw.js', { scope: '/' })
-					.then(() => console.log('[PWA] Service worker registered'))
+					.then(reg => {
+						console.log('[PWA] Service worker registered');
+						if (reg.waiting && hadController) window.showSwUpdateToast(reg);
+						reg.addEventListener('updatefound', () => {
+							const nw = reg.installing;
+							if (!nw) return;
+							nw.addEventListener('statechange', () => {
+								if (nw.state === 'installed' && hadController) {
+									window.showSwUpdateToast(reg);
+								}
+							});
+						});
+					})
 					.catch(err => console.warn('[PWA] SW registration failed', err));
 				});
 			}

@@ -204,8 +204,7 @@ document.addEventListener('keydown', e => {
   if(progressModal.classList.contains('open')) closeProgress();
   if($('#pwModal').classList.contains('open')){ closePwModal(); return; }
   if(usersModal.classList.contains('open')){
-    usersModal.classList.remove('open');
-    usersModal.setAttribute('aria-hidden','true');
+    hideBackdrop(usersModal);
   }
 });
 

@@ -72,6 +72,15 @@ const isoLocal = d => d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(
 const todayISO = () => isoLocal(new Date());
 function shiftISO(days){ const d = new Date(); d.setDate(d.getDate()+days); return isoLocal(d); }
 
+/* Safe backdrop close — blurs focused element first to prevent Chrome's
+   "Blocked aria-hidden on an element because its descendant retained focus" warning. */
+function hideBackdrop(el){
+	if(!el) return;
+	const ae = document.activeElement;
+	if(ae && el.contains(ae) && typeof ae.blur === 'function') ae.blur();
+	el.classList.remove('open');
+	el.setAttribute('aria-hidden','true');
+}
 /* Strip prototype-pollution keys from any external object/array tree.
    JSON.parse (and JSONB) can carry "__proto__", "constructor", or "prototype"
    as OWN enumerable keys — Object.assign then triggers the inherited __proto__
@@ -589,6 +598,7 @@ function save(){
 }
 function normalizeProject(p){
 	if(!p || typeof p !== 'object') return p;
+	p = sanitizeData(p);
 	if(!Array.isArray(p.visits)) p.visits = [];
 	return p;
 }

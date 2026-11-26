@@ -3,7 +3,7 @@
 	pass-through for Supabase / external APIs.
 ==================================================== */
 
-const VERSION   = 'v30';
+const VERSION   = 'v31';
 const SHELL     = 'shell-' + VERSION;
 const RUNTIME   = 'runtime-' + VERSION;
 
@@ -16,6 +16,7 @@ const PRECACHE = [
 	'./app.js',
 	'./config.js',
 	'./manifest.json',
+	'./contact.html',
 	'./assets/icons/icon-192.png',
 	'./assets/icons/icon-512.png',
 	'./assets/icons/icon-maskable-512.png'
@@ -30,7 +31,7 @@ self.addEventListener('install', e => {
 					if (res && res.ok) await c.put(url, res);
 				} catch (_) { /* ignore individual failures */ }
 			}));
-		}).then(() => self.skipWaiting())
+		})
 	);
 });
 
@@ -80,4 +81,7 @@ self.addEventListener('fetch', e => {
 			}).catch(() => cached);
 		})
 	);
+});
+self.addEventListener('message', e => {
+	if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });

@@ -26,10 +26,9 @@
     Strict-Transport-Security        = "max-age=63072000; includeSubDomains; preload"
     Cross-Origin-Opener-Policy       = "same-origin"
     Cross-Origin-Resource-Policy     = "same-origin"
-    # Content-Security-Policy — commented out by default (test in browser console first)
-    # Uncomment after confirming everything works with it enabled.
+    # Content-Security-Policy — enabled in v31 (test in browser console first)
     #
-    # Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 # ── HTML: never cache (so SW updates roll out) ──
 [[headers]]

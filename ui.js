@@ -113,8 +113,7 @@ function confirmDialog(opts){
 		let done = false;
 		const finish = v => {
 			if(done) return; done = true;
-			m.classList.remove('open');
-			m.setAttribute('aria-hidden','true');
+			hideBackdrop(m);
 			okEl.removeEventListener('click', onOk);
 			cancelEl.removeEventListener('click', onCancel);
 			closeEl.removeEventListener('click', onCancel);
@@ -709,8 +708,7 @@ function openModal(p){
 	setTimeout(() => $('#pName').focus(), 60);
 }
 function closeModal(){
-	modal.classList.remove('open');
-	modal.setAttribute('aria-hidden','true');
+	hideBackdrop(modal);
 	editingId = null;
 }
 function readForm(){
@@ -825,8 +823,7 @@ function openProgressModal(p){
 	progressModal.setAttribute('aria-hidden','false');
 }
 function closeProgress(){
-	progressModal.classList.remove('open');
-	progressModal.setAttribute('aria-hidden','true');
+	hideBackdrop(progressModal);
 	progressId = null;
 }
 $('#pmProgress').addEventListener('input', e => {
@@ -854,8 +851,7 @@ let visitsModalProjectId = null;
 let currentThumbs = {};
 
 function closeVisitsModal(){
-	visitsModal.classList.remove('open');
-	visitsModal.setAttribute('aria-hidden','true');
+	hideBackdrop(visitsModal);
 	visitsModalProjectId = null;
 }
 $$('[data-close-visits]').forEach(el => el.addEventListener('click', closeVisitsModal));
@@ -1041,8 +1037,7 @@ async function closeNewVisit(force){
 			if(!ok) return;
 		}
 	}
-	newVisitModal.classList.remove('open');
-	newVisitModal.setAttribute('aria-hidden','true');
+	hideBackdrop(newVisitModal);
 	visitModalProjectId = null;
 	visitLocation = null;
 	visitPhotoQueue = [];
@@ -1263,8 +1258,7 @@ function closeLightbox(){
 	const img = $('#lightboxImg');
 	if(img.dataset.url){ URL.revokeObjectURL(img.dataset.url); img.dataset.url = ''; }
 	img.src = '';
-	$('#lightbox').classList.remove('open');
-	$('#lightbox').setAttribute('aria-hidden','true');
+	hideBackdrop($('#lightbox'));
 }
 $('#lightboxClose').addEventListener('click', closeLightbox);
 $('#lightbox').addEventListener('click', e => { if(e.target.id === 'lightbox') closeLightbox(); });
@@ -1480,8 +1474,7 @@ function openPwModal(u){
 }
 function closePwModal(){
 	if(!pwModal) return;
-	pwModal.classList.remove('open');
-	pwModal.setAttribute('aria-hidden','true');
+	hideBackdrop(pwModal);
 	pwUserId = null;
 }
 
@@ -1529,15 +1522,13 @@ if(pwFormEl){
 $$('[data-close-users]').forEach(el => {
 	el.addEventListener('click', () => {
 		if(!usersModal) return;
-		usersModal.classList.remove('open');
-		usersModal.setAttribute('aria-hidden','true');
+		hideBackdrop(usersModal);
 	});
 });
 if(usersModal){
 	usersModal.addEventListener('click', e => {
 		if(e.target === usersModal){
-			usersModal.classList.remove('open');
-			usersModal.setAttribute('aria-hidden','true');
+			hideBackdrop(usersModal);
 		}
 	});
 }
