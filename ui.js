@@ -1314,7 +1314,7 @@ function renderUsersModal(){
 		'</button>';
 		
 		return '<div class="user-row">' + main +
-		'<select class="filter" data-role-for="' + u.id + '"' + (isMe ? ' disabled' : '') + '>' +
+		'<select class="filter" id="role-sel-' + esc(u.id) + '" name="role-select" data-role-for="' + u.id + '"' + (isMe ? ' disabled' : '') + '>' +
         '<option value="user"' + (u.role === 'user' ? ' selected' : '') + '>تقني</option>' +
         '<option value="admin"' + (u.role === 'admin' ? ' selected' : '') + '>مسؤول متابعة المشاريع</option>' +
 		'</select>' +
